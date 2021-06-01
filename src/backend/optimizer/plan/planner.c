@@ -1472,6 +1472,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			sort_input_target_parallel_safe = final_target_parallel_safe;
 		}
 
+		ListCell *listCell;
+		int rti;
+
 		/*
 		 * If we have window functions to deal with, the output from any
 		 * grouping step needs to be what the window functions want;
