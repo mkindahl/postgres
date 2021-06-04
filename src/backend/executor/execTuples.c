@@ -1899,17 +1899,14 @@ slot_getmissingattrs(TupleTableSlot *slot, int startAttNum, int lastAttNum)
  * slot_getsomeattrs_int - workhorse for slot_getsomeattrs()
  */
 void
-slot_getsomeattrs_int(TupleTableSlot *slot, int attnum)
+slot_getsomeattrs_int(TupleTableSlot *slot, Bitmapset* attmap)
 {
 	/* Check for caller errors */
-	Assert(slot->tts_nvalid < attnum);	/* checked in slot_getsomeattrs */
-	Assert(attnum > 0);
-
-	if (unlikely(attnum > slot->tts_tupleDescriptor->natts))
-		elog(ERROR, "invalid attribute number %d", attnum);
+	Assert(bms_subset_compare(slot->tts_valid, attnum) == BMS_SUBSET1);
+	Assert(!bms_is_empty(attmap));
 
 	/* Fetch as many attributes as possible from the underlying tuple. */
-	slot->tts_ops->getsomeattrs(slot, attnum);
+	slot->tts_ops->getsomeattrs(slot, attmap);
 
 	/*
 	 * If the underlying tuple doesn't have enough attributes, tuple

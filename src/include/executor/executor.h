@@ -377,7 +377,7 @@ ExecProject(ProjectionInfo *projInfo)
 	 * valid virtual tuple (inlined version of ExecStoreVirtualTuple()).
 	 */
 	slot->tts_flags &= ~TTS_FLAG_EMPTY;
-	slot->tts_nvalid = slot->tts_tupleDescriptor->natts;
+	slot->tts_nvalid = slot->tts_tupleDescriptor->atts;
 
 	return slot;
 }

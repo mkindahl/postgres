@@ -696,7 +696,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	TupleDesc	oldTupDesc = RelationGetDescr(OldHeap);
 	TupleDesc	newTupDesc = RelationGetDescr(NewHeap);
 	TupleTableSlot *slot;
-	int			natts;
+	Bitmapset*  atts;
 	Datum	   *values;
 	bool	   *isnull;
 	BufferHeapTupleTableSlot *hslot;
@@ -712,7 +712,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 	Assert(RelationGetTargetBlock(NewHeap) == InvalidBlockNumber);
 
 	/* Preallocate values/isnull arrays */
-	natts = newTupDesc->natts;
+	atts = newTupDesc->atts;
 	values = (Datum *) palloc(natts * sizeof(Datum));
 	isnull = (bool *) palloc(natts * sizeof(bool));
 

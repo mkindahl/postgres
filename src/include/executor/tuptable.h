@@ -118,7 +118,7 @@ typedef struct TupleTableSlot
 #define FIELDNO_TUPLETABLESLOT_FLAGS 1
 	uint16		tts_flags;		/* Boolean states */
 #define FIELDNO_TUPLETABLESLOT_NVALID 2
-	AttrNumber	tts_nvalid;		/* # of valid values in tts_values */
+	Bitmapset  *tts_valid;		/* valid values in tts_values */
 	const TupleTableSlotOps *const tts_ops; /* implementation of slot */
 #define FIELDNO_TUPLETABLESLOT_TUPLEDESCRIPTOR 4
 	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
@@ -158,7 +158,7 @@ struct TupleTableSlotOps
 	 * in which case it should set tts_nvalid to the number of returned
 	 * columns.
 	 */
-	void		(*getsomeattrs) (TupleTableSlot *slot, int natts);
+	void		(*getsomeattrs) (TupleTableSlot *slot, Bitmapset *atts);
 
 	/*
 	 * Returns value of the given system attribute as a datum and sets isnull
@@ -328,7 +328,7 @@ extern MinimalTuple ExecFetchSlotMinimalTuple(TupleTableSlot *slot,
 extern Datum ExecFetchSlotHeapTupleDatum(TupleTableSlot *slot);
 extern void slot_getmissingattrs(TupleTableSlot *slot, int startAttNum,
 								 int lastAttNum);
-extern void slot_getsomeattrs_int(TupleTableSlot *slot, int attnum);
+extern void slot_getsomeattrs_int(TupleTableSlot *slot, Bitmapset* attmap);
 
 
 #ifndef FRONTEND
@@ -338,10 +338,10 @@ extern void slot_getsomeattrs_int(TupleTableSlot *slot, int attnum);
  * valid at least up through the attnum'th entry.
  */
 static inline void
-slot_getsomeattrs(TupleTableSlot *slot, int attnum)
+slot_getsomeattrs(TupleTableSlot *slot, Bitmapset* attmap)
 {
-	if (slot->tts_nvalid < attnum)
-		slot_getsomeattrs_int(slot, attnum);
+	if (bms_subset_compare(slot->tts_valid, attmap) == BMS_SUBSET1)
+		slot_getsomeattrs_int(slot, attmap);
 }
 
 /*
@@ -353,7 +353,7 @@ slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 static inline void
 slot_getallattrs(TupleTableSlot *slot)
 {
-	slot_getsomeattrs(slot, slot->tts_tupleDescriptor->natts);
+	slot_getsomeattrs(slot, slot->tts_tupleDescriptor->attbitmap);
 }
 
 
@@ -368,8 +368,12 @@ slot_attisnull(TupleTableSlot *slot, int attnum)
 {
 	AssertArg(attnum > 0);
 
-	if (attnum > slot->tts_nvalid)
-		slot_getsomeattrs(slot, attnum);
+	if (!bms_is_member(attnum, slot->tts_valid)) {
+		Bitmapset *atts = bms_copy(slot->tts_valid);
+		bms_add_member(atts, attnum);
+		slot_getsomeattrs(slot, atts);
+		bms_free(atts);
+	}
 
 	return slot->tts_isnull[attnum - 1];
 }
@@ -383,8 +387,12 @@ slot_getattr(TupleTableSlot *slot, int attnum,
 {
 	AssertArg(attnum > 0);
 
-	if (attnum > slot->tts_nvalid)
-		slot_getsomeattrs(slot, attnum);
+	if (!bms_is_member(attnum, slot->tts_valid)) {
+		Bitmapset *atts = bms_copy(slot->tts_valid);
+		bms_add_member(atts, attnum);
+		slot_getsomeattrs(slot, atts);
+		bms_free(atts);
+	}
 
 	*isnull = slot->tts_isnull[attnum - 1];
 

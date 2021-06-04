@@ -16,8 +16,8 @@
 
 #include "access/attnum.h"
 #include "catalog/pg_attribute.h"
+#include "nodes/bitmapset.h"
 #include "nodes/pg_list.h"
-
 
 typedef struct AttrDefault
 {
@@ -78,7 +78,7 @@ typedef struct TupleConstr
  */
 typedef struct TupleDescData
 {
-	int			natts;			/* number of attributes in the tuple */
+	Bitmapset*  attbitmap;		/* attributes in the tuple */
 	Oid			tdtypeid;		/* composite type ID for tuple type */
 	int32		tdtypmod;		/* typmod for tuple type */
 	int			tdrefcount;		/* reference count, or -1 if not counting */
