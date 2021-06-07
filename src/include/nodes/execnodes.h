@@ -1357,6 +1357,28 @@ typedef struct BitmapOrState
  * ----------------------------------------------------------------
  */
 
+/*
+ * These structs store information about index quals that don't have simple
+ * constant right-hand sides.  See comments for ExecIndexBuildScanKeys()
+ * for discussion.
+ */
+typedef struct
+{
+	struct ScanKeyData *scan_key;	/* scankey to put value into */
+	ExprState  *key_expr;		/* expr to evaluate to get value */
+	bool		key_toastable;	/* is expr's result a toastable datatype? */
+} IndexRuntimeKeyInfo;
+
+typedef struct
+{
+	struct ScanKeyData *scan_key;	/* scankey to put value into */
+	ExprState  *array_expr;		/* expr to evaluate to get array value */
+	int			next_elem;		/* next array element to use */
+	int			num_elems;		/* number of elems in current array value */
+	Datum	   *elem_values;	/* array of num_elems Datums */
+	bool	   *elem_nulls;		/* array of num_elems is-null flags */
+} IndexArrayKeyInfo;
+
 /* ----------------
  *	 ScanState information
  *
@@ -1386,7 +1408,15 @@ typedef struct ScanState
 typedef struct SeqScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	Size		pscan_len;		/* size of parallel heap scan descriptor */
+	struct ScanKeyData *sss_ScanKeys;
+	int			sss_NumScanKeys;
+	IndexRuntimeKeyInfo *sss_RuntimeKeys;
+	int			sss_NumRuntimeKeys;
+	bool		sss_RuntimeKeysReady;
+	ExprContext *sss_RuntimeContext;
+	Relation	sss_RelationDesc;
+
+	Size		sss_PscanLen;		/* size of parallel heap scan descriptor */
 } SeqScanState;
 
 /* ----------------
@@ -1409,28 +1439,6 @@ typedef struct SampleScanState
 	bool		haveblock;		/* has a block for sampling been determined */
 	bool		done;			/* exhausted all tuples? */
 } SampleScanState;
-
-/*
- * These structs store information about index quals that don't have simple
- * constant right-hand sides.  See comments for ExecIndexBuildScanKeys()
- * for discussion.
- */
-typedef struct
-{
-	struct ScanKeyData *scan_key;	/* scankey to put value into */
-	ExprState  *key_expr;		/* expr to evaluate to get value */
-	bool		key_toastable;	/* is expr's result a toastable datatype? */
-} IndexRuntimeKeyInfo;
-
-typedef struct
-{
-	struct ScanKeyData *scan_key;	/* scankey to put value into */
-	ExprState  *array_expr;		/* expr to evaluate to get array value */
-	int			next_elem;		/* next array element to use */
-	int			num_elems;		/* number of elems in current array value */
-	Datum	   *elem_values;	/* array of num_elems Datums */
-	bool	   *elem_nulls;		/* array of num_elems is-null flags */
-} IndexArrayKeyInfo;
 
 /* ----------------
  *	 IndexScanState information

@@ -1830,9 +1830,11 @@ _readScan(void)
 static SeqScan *
 _readSeqScan(void)
 {
-	READ_LOCALS_NO_FIELDS(SeqScan);
+	READ_LOCALS(SeqScan);
 
-	ReadCommonScan(local_node);
+	ReadCommonScan(&local_node->scan);
+
+	READ_NODE_FIELD(scanqual);
 
 	READ_DONE();
 }

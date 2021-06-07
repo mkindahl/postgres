@@ -348,7 +348,12 @@ typedef struct Scan
  *		sequential scan node
  * ----------------
  */
-typedef Scan SeqScan;
+typedef struct SeqScan
+{
+	Scan		scan;
+	List	   *scanqual;		/* list of scan quals (usually OpExprs) */
+	List	   *scanqualorig;	/* ... and in initial form */
+} SeqScan;
 
 /* ----------------
  *		table sample scan node

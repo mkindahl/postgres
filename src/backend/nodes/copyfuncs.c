@@ -446,6 +446,8 @@ _copySeqScan(const SeqScan *from)
 	 */
 	CopyScanFields((const Scan *) from, (Scan *) newnode);
 
+	COPY_NODE_FIELD(scanqual);
+
 	return newnode;
 }
 

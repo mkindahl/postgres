@@ -30,6 +30,7 @@
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "executor/execdebug.h"
+#include "executor/nodeIndexscan.h"
 #include "executor/nodeSeqscan.h"
 #include "utils/rel.h"
 
@@ -123,6 +124,7 @@ SeqScanState *
 ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 {
 	SeqScanState *scanstate;
+	Relation	currentRelation;
 
 	/*
 	 * Once upon a time it was possible to have an outerPlan of a SeqScan, but
@@ -149,15 +151,14 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	/*
 	 * open the scan relation
 	 */
-	scanstate->ss.ss_currentRelation =
-		ExecOpenScanRelation(estate,
-							 node->scanrelid,
-							 eflags);
+	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
+
+	scanstate->ss.ss_currentRelation = currentRelation;
 
 	/* and create slot with the appropriate rowtype */
 	ExecInitScanTupleSlot(estate, &scanstate->ss,
-						  RelationGetDescr(scanstate->ss.ss_currentRelation),
-						  table_slot_callbacks(scanstate->ss.ss_currentRelation));
+						  RelationGetDescr(currentRelation),
+						  table_slot_callbacks(currentRelation));
 
 	/*
 	 * Initialize result type and projection.
@@ -169,7 +170,51 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	 * initialize child expressions
 	 */
 	scanstate->ss.ps.qual =
-		ExecInitQual(node->plan.qual, (PlanState *) scanstate);
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
+
+	/*
+	 * If we are just doing EXPLAIN (ie, aren't going to run the plan), stop
+	 * here.
+	 */
+	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
+		return scanstate;
+
+	/*
+	 * Initialize index-specific scan state
+	 */
+	scanstate->sss_RuntimeKeysReady = false;
+	scanstate->sss_RuntimeKeys = NULL;
+	scanstate->sss_NumRuntimeKeys = 0;
+
+	/*
+	 * build the index scan keys from the index qualification. (Note that we
+	 * use the ExecIndexBuildScanKeys here since it is generic and not
+	 * specific to index scans.)
+	 */
+	ExecIndexBuildScanKeys((PlanState *) scanstate,
+						   scanstate->sss_RelationDesc,
+						   node->scanqual,
+						   false,
+						   &scanstate->sss_ScanKeys,
+						   &scanstate->sss_NumScanKeys,
+						   &scanstate->sss_RuntimeKeys,
+						   &scanstate->sss_NumRuntimeKeys,
+						   NULL,	/* no ArrayKeys */
+						   NULL);
+
+		/*
+	 * If we have runtime keys, we need an ExprContext to evaluate them. The
+	 * node's standard context won't do because we want to reset that context
+	 * for every tuple.  So, build another context just like the other one...
+	 */
+	if (scanstate->sss_NumRuntimeKeys != 0)
+	{
+		ExprContext *stdecontext = scanstate->ss.ps.ps_ExprContext;
+
+		ExecAssignExprContext(estate, &scanstate->ss.ps);
+		scanstate->sss_RuntimeContext = scanstate->ss.ps.ps_ExprContext;
+		scanstate->ss.ps.ps_ExprContext = stdecontext;
+	}
 
 	return scanstate;
 }
@@ -252,9 +297,9 @@ ExecSeqScanEstimate(SeqScanState *node,
 {
 	EState	   *estate = node->ss.ps.state;
 
-	node->pscan_len = table_parallelscan_estimate(node->ss.ss_currentRelation,
-												  estate->es_snapshot);
-	shm_toc_estimate_chunk(&pcxt->estimator, node->pscan_len);
+	node->sss_PscanLen = table_parallelscan_estimate(node->ss.ss_currentRelation,
+													 estate->es_snapshot);
+	shm_toc_estimate_chunk(&pcxt->estimator, node->sss_PscanLen);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 }
 
@@ -271,7 +316,7 @@ ExecSeqScanInitializeDSM(SeqScanState *node,
 	EState	   *estate = node->ss.ps.state;
 	ParallelTableScanDesc pscan;
 
-	pscan = shm_toc_allocate(pcxt->toc, node->pscan_len);
+	pscan = shm_toc_allocate(pcxt->toc, node->sss_PscanLen);
 	table_parallelscan_initialize(node->ss.ss_currentRelation,
 								  pscan,
 								  estate->es_snapshot);

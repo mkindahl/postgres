@@ -17,7 +17,7 @@
 #include "access/attnum.h"
 #include "access/stratnum.h"
 #include "fmgr.h"
-
+#include "lib/stringinfo.h"
 
 /*
  * A ScanKey represents the application of a comparison operator between
@@ -131,6 +131,7 @@ extern void ScanKeyInit(ScanKey entry,
 						StrategyNumber strategy,
 						RegProcedure procedure,
 						Datum argument);
+extern void ScanKeyText(StringInfo buf, ScanKey entry);
 extern void ScanKeyEntryInitialize(ScanKey entry,
 								   int flags,
 								   AttrNumber attributeNumber,

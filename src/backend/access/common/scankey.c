@@ -88,6 +88,11 @@ ScanKeyInit(ScanKey entry,
 	fmgr_info(procedure, &entry->sk_func);
 }
 
+void ScanKeyText(StringInfo buf, ScanKey entry) {
+
+}
+
+
 /*
  * ScanKeyEntryInitializeWithInfo
  *		Initializes a scan key entry using an already-completed FmgrInfo

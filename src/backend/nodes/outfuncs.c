@@ -536,6 +536,8 @@ _outSeqScan(StringInfo str, const SeqScan *node)
 	WRITE_NODE_TYPE("SEQSCAN");
 
 	_outScanInfo(str, (const Scan *) node);
+
+	WRITE_NODE_FIELD(scanqual);
 }
 
 static void

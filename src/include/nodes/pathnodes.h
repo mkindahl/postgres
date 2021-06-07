@@ -1193,6 +1193,12 @@ typedef struct Path
 #define PATH_REQ_OUTER(path)  \
 	((path)->param_info ? (path)->param_info->ppi_req_outer : (Relids) NULL)
 
+typedef struct ScanPath
+{
+	Path		path;
+	List	   *clauses;
+} ScanPath;
+
 /*----------
  * IndexPath represents an index scan over a single index.
  *

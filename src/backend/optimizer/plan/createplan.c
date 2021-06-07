@@ -120,7 +120,7 @@ static LockRows *create_lockrows_plan(PlannerInfo *root, LockRowsPath *best_path
 static ModifyTable *create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path);
 static Limit *create_limit_plan(PlannerInfo *root, LimitPath *best_path,
 								int flags);
-static SeqScan *create_seqscan_plan(PlannerInfo *root, Path *best_path,
+static SeqScan *create_seqscan_plan(PlannerInfo *root, ScanPath *best_path,
 									List *tlist, List *scan_clauses);
 static SampleScan *create_samplescan_plan(PlannerInfo *root, Path *best_path,
 										  List *tlist, List *scan_clauses);
@@ -179,7 +179,8 @@ static void copy_generic_path_info(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
 static void label_sort_with_costsize(PlannerInfo *root, Sort *plan,
 									 double limit_tuples);
-static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
+static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid,
+							 List *scanqual);
 static SampleScan *make_samplescan(List *qptlist, List *qpqual, Index scanrelid,
 								   TableSampleClause *tsc);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
@@ -657,7 +658,7 @@ create_scan_plan(PlannerInfo *root, Path *best_path, int flags)
 	{
 		case T_SeqScan:
 			plan = (Plan *) create_seqscan_plan(root,
-												best_path,
+												(ScanPath *) best_path,
 												tlist,
 												scan_clauses);
 			break;
@@ -2831,34 +2832,65 @@ create_limit_plan(PlannerInfo *root, LimitPath *best_path, int flags)
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static SeqScan *
-create_seqscan_plan(PlannerInfo *root, Path *best_path,
+create_seqscan_plan(PlannerInfo *root, ScanPath *best_path,
 					List *tlist, List *scan_clauses)
 {
 	SeqScan    *scan_plan;
-	Index		scan_relid = best_path->parent->relid;
+	List	   *clauses = best_path->clauses;
+	Index		scan_relid = best_path->path.parent->relid;
+	List	   *qpqual = NIL;
+	List	   *stripped_quals;
+	List	   *fixed_quals;
+	ListCell   *cell;
 
 	/* it should be a base rel... */
 	Assert(scan_relid > 0);
-	Assert(best_path->parent->rtekind == RTE_RELATION);
+	Assert(best_path->path.parent->rtekind == RTE_RELATION);
+
+	/*
+	 * Extract the index qual expressions (stripped of RestrictInfos) from the
+	 * IndexClauses list, and prepare a copy with index Vars substituted for
+	 * table Vars.  (This step also does replace_nestloop_params on the
+	 * fixed_indexquals.)
+	 */
+	fix_indexqual_references(root, best_path,
+							 &stripped_quals,
+							 &fixed_quals);
+
+	foreach(cell, scan_clauses)
+	{
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, cell);
+
+		if (rinfo->pseudoconstant)
+			continue;			/* we may drop pseudoconstants here */
+		if (is_redundant_with_indexclauses(rinfo, clauses))
+			continue;			/* dup or derived from same EquivalenceClass */
+		if (!contain_mutable_functions((Node *) rinfo->clause) &&
+			predicate_implied_by(list_make1(rinfo->clause), stripped_quals,
+								 false))
+			continue;			/* provably implied by indexquals */
+		qpqual = lappend(qpqual, rinfo);
+	}
 
 	/* Sort clauses into best execution order */
-	scan_clauses = order_qual_clauses(root, scan_clauses);
+	qpqual = order_qual_clauses(root, qpqual);
 
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
-	scan_clauses = extract_actual_clauses(scan_clauses, false);
+	qpqual = extract_actual_clauses(qpqual, false);
 
 	/* Replace any outer-relation variables with nestloop params */
-	if (best_path->param_info)
+	if (best_path->path.param_info)
 	{
-		scan_clauses = (List *)
-			replace_nestloop_params(root, (Node *) scan_clauses);
+		qpqual = (List *)
+			replace_nestloop_params(root, (Node *) qpqual);
 	}
 
 	scan_plan = make_seqscan(tlist,
-							 scan_clauses,
-							 scan_relid);
+							 qpqual,
+							 scan_relid,
+							 fixed_quals);
 
-	copy_generic_path_info(&scan_plan->plan, best_path);
+	copy_generic_path_info(&scan_plan->scan.plan, &best_path->path);
 
 	return scan_plan;
 }
@@ -5369,16 +5401,18 @@ bitmap_subplan_mark_shared(Plan *plan)
 static SeqScan *
 make_seqscan(List *qptlist,
 			 List *qpqual,
-			 Index scanrelid)
+			 Index scanrelid,
+			 List *scanqual)
 {
 	SeqScan    *node = makeNode(SeqScan);
-	Plan	   *plan = &node->plan;
+	Plan	   *plan = &node->scan.plan;
 
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
-	node->scanrelid = scanrelid;
+	node->scan.scanrelid = scanrelid;
+	node->scanqual = scanqual;
 
 	return node;
 }

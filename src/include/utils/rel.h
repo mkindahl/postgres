@@ -179,9 +179,20 @@ typedef struct RelationData
 	Oid			rd_amhandler;	/* OID of index AM's handler function */
 
 	/*
-	 * Table access method.
+	 * Table access method with supporting data.
+	 *
+	 * If the relation is a table, these fields are set. If the relation is an
+	 * index, these fields are not used and the table access method pointer is
+	 * NULL.
+	 *
+	 * Note: Many of these fields are similar to the information saved for
+	 * index access methods and it is probably possible to combine these and
+	 * avoid duplicating the information.
 	 */
+	MemoryContext rd_scancxt;	/* Memory context for Table AM scan key */
 	const struct TableAmRoutine *rd_tableam;
+	Oid *rd_scanopfamily;	   /* OIDs of op families for each table column */
+	Oid *rd_scanopcintype;	   /* OIDs of opclass declared input data types */
 
 	/* These are non-NULL only for an index relation: */
 	Form_pg_index rd_index;		/* pg_index tuple describing this index */
