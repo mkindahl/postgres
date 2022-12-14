@@ -704,7 +704,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'C':
-				output_config_variable = strdup(optarg);
+				output_config_variable = pstrdup(optarg);
 				break;
 
 			case 'c':
@@ -735,7 +735,7 @@ PostmasterMain(int argc, char *argv[])
 				}
 
 			case 'D':
-				userDoption = strdup(optarg);
+				userDoption = pstrdup(optarg);
 				break;
 
 			case 'd':
@@ -4275,8 +4275,8 @@ BackendInitialize(Port *port)
 	 * Save remote_host and remote_port in port structure (after this, they
 	 * will appear in log_line_prefix data for log messages).
 	 */
-	port->remote_host = strdup(remote_host);
-	port->remote_port = strdup(remote_port);
+	port->remote_host = pstrdup(remote_host);
+	port->remote_port = pstrdup(remote_port);
 
 	/* And now we can issue the Log_connections message, if wanted */
 	if (Log_connections)
@@ -4307,7 +4307,7 @@ BackendInitialize(Port *port)
 		ret == 0 &&
 		strspn(remote_host, "0123456789.") < strlen(remote_host) &&
 		strspn(remote_host, "0123456789ABCDEFabcdef:") < strlen(remote_host))
-		port->remote_hostname = strdup(remote_host);
+		port->remote_hostname = pstrdup(remote_host);
 
 	/*
 	 * Ready to begin client interaction.  We will give up and _exit(1) after
