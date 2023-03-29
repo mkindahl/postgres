@@ -4117,8 +4117,19 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("integer out of range")));
 		}
-		else
-			result = ((float8) count * (operand - bound1) / (bound2 - bound1)) + 1;
+		else {
+			/*
+			 * Since the expressions "operand - bound1" and "bound2 - bound1"
+			 * can overflow for some combinations of values that are close to
+			 * -DBL_MAX or DBL_MAX, this can lead NaN values, which when cast
+			 * to integer lead to strange values.
+			 *
+			 * To avoid this, we divide the values by 2 before performing the
+			 * subtraction. This will ensure that the expressions will not
+			 * overflow and lead to a strange result.
+			 */
+			result = (count * ((operand / 2 - bound1 / 2) / (bound2 / 2 - bound1 / 2))) + 1;
+		}
 	}
 	else if (bound1 > bound2)
 	{
@@ -4142,5 +4153,6 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 		result = 0;				/* keep the compiler quiet */
 	}
 
+	Assert(result >= 0 && result <= count + 1);
 	PG_RETURN_INT32(result);
 }

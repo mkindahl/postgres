@@ -900,6 +900,32 @@ SELECT width_bucket(0.0::float8, 5, '-Infinity'::float8, 20); -- error
 SELECT width_bucket('Infinity'::float8, 1, 10, 10),
        width_bucket('-Infinity'::float8, 1, 10, 10);
 
+WITH sample(oper, low, high, cnt) AS (
+  VALUES
+    -- Check ranges that can cause overflow in the internal
+    -- calculations. These are basically computations where difference
+    -- between operand and low and high can exceed DBL_MAX.
+    (10.5::float8, -1.797e+308::float8, 1.797e+308::float8, 1::int4),
+    (10.5::float8, -1.797e+308::float8, 1.797e+308::float8, 2),
+    (10.5::float8, -1.797e+308::float8, 1.797e+308::float8, 3),
+
+    (1.797e+308::float8 / 2, -1.797e+308::float8, 1.797e+308::float8, 10),
+    (-1.797e+308::float8 / 2, -1.797e+308::float8, 1.797e+308::float8, 10),
+
+    (1.797e+308::float8 / 2, -1.797e+308::float8, 1.797e+308::float8, 16),
+    (-1.797e+308::float8 / 2, -1.797e+308::float8, 1.797e+308::float8, 16),
+
+    (1.797e+308::float8, -1.797e+308::float8 / 2, 1.797e+308::float8 / 2, 10),
+    (-1.797e+308::float8, -1.797e+308::float8 / 2, 1.797e+308::float8 / 2, 10),
+
+    -- Check that potential underflow situations does not result in
+    -- weird values.
+    (2.22507e-308::float8, 2 * -2.22507e-308::float8, 2 * 2.22507e-308::float8, 4),
+    (-2.22507e-308::float8, 2 * -2.22507e-308::float8, 2 * 2.22507e-308::float8, 4),
+    (2.22507e-308::float8, 3 * -2.22507e-308::float8, 3 * 2.22507e-308::float8, 6),
+    (-2.22507e-308::float8, 3 * -2.22507e-308::float8, 3 * 2.22507e-308::float8, 6)
+) SELECT width_bucket(oper, low, high, cnt) FROM sample;
+
 DROP TABLE width_bucket_test;
 
 -- Simple test for roundoff error when results should be exact
