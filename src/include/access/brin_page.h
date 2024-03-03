@@ -78,9 +78,10 @@ typedef struct BrinMetaPageData
 typedef struct RevmapContents
 {
 	/*
-	 * This array will fill all available space on the page.  It should be
-	 * declared [FLEXIBLE_ARRAY_MEMBER], but for some reason you can't do that
-	 * in an otherwise-empty struct.
+	 * This array will fill all available space on the page.  We cannot use
+	 * FLEXIBLE_ARRAY_MEMBER since the C standard requires (6.7.2.1 §16) that
+	 * there is at least one additional named member in the struct in addition
+	 * to the flexible array member, so we declare an array of size 1.
 	 */
 	ItemPointerData rm_tids[1];
 } RevmapContents;
