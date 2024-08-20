@@ -22,6 +22,7 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "parser/parse_node.h"
+#include "storage/read_stream.h"
 #include "storage/buf.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
@@ -379,6 +380,10 @@ extern void analyze_rel(Oid relid, RangeVar *relation,
 						VacuumParams *params, List *va_cols, bool in_outer_xact,
 						BufferAccessStrategy bstrategy);
 extern bool std_typanalyze(VacAttrStats *stats);
+extern BlockNumber analyze_block_sampling_stream_read_next(ReadStream *stream,
+														   void *callback_private_data,
+														   void *per_buffer_data);
+
 
 /* in utils/misc/sampling.c --- duplicate of declarations in utils/sampling.h */
 extern double anl_random_fract(void);

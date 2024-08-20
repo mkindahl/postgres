@@ -74,13 +74,13 @@ int			default_statistics_target = 100;
 
 /* A few variables that don't seem worth passing around as parameters */
 static MemoryContext anl_context = NULL;
-static BufferAccessStrategy vac_strategy;
 
 
 static void do_analyze_rel(Relation onerel,
 						   VacuumParams *params, List *va_cols,
 						   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
-						   bool inh, bool in_outer_xact, int elevel);
+						   bool inh, bool in_outer_xact, int elevel,
+						   BufferAccessStrategy bstrategy);
 static void compute_index_stats(Relation onerel, double totalrows,
 								AnlIndexData *indexdata, int nindexes,
 								HeapTuple *rows, int numrows,
@@ -89,11 +89,13 @@ static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 									   Node *index_expr);
 static int	acquire_sample_rows(Relation onerel, int elevel,
 								HeapTuple *rows, int targrows,
-								double *totalrows, double *totaldeadrows);
+								double *totalrows, double *totaldeadrows,
+								BufferAccessStrategy bstrategy);
 static int	compare_rows(const void *a, const void *b, void *arg);
 static int	acquire_inherited_sample_rows(Relation onerel, int elevel,
 										  HeapTuple *rows, int targrows,
-										  double *totalrows, double *totaldeadrows);
+										  double *totalrows, double *totaldeadrows,
+										  BufferAccessStrategy bstrategy);
 static void update_attstats(Oid relid, bool inh,
 							int natts, VacAttrStats **vacattrstats);
 static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
@@ -122,9 +124,6 @@ analyze_rel(Oid relid, RangeVar *relation,
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
-
-	/* Set up static variables */
-	vac_strategy = bstrategy;
 
 	/*
 	 * Check for user-requested abort.
@@ -249,14 +248,14 @@ analyze_rel(Oid relid, RangeVar *relation,
 	 */
 	if (onerel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		do_analyze_rel(onerel, params, va_cols, acquirefunc,
-					   relpages, false, in_outer_xact, elevel);
+					   relpages, false, in_outer_xact, elevel, bstrategy);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
 		do_analyze_rel(onerel, params, va_cols, acquirefunc, relpages,
-					   true, in_outer_xact, elevel);
+					   true, in_outer_xact, elevel, bstrategy);
 
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
@@ -280,7 +279,7 @@ static void
 do_analyze_rel(Relation onerel, VacuumParams *params,
 			   List *va_cols, AcquireSampleRowsFunc acquirefunc,
 			   BlockNumber relpages, bool inh, bool in_outer_xact,
-			   int elevel)
+			   int elevel, BufferAccessStrategy bstrategy)
 {
 	int			attr_cnt,
 				tcnt,
@@ -529,11 +528,13 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	if (inh)
 		numrows = acquire_inherited_sample_rows(onerel, elevel,
 												rows, targrows,
-												&totalrows, &totaldeadrows);
+												&totalrows, &totaldeadrows,
+												bstrategy);
 	else
 		numrows = (*acquirefunc) (onerel, elevel,
 								  rows, targrows,
-								  &totalrows, &totaldeadrows);
+								  &totalrows, &totaldeadrows,
+								  bstrategy);
 
 	/*
 	 * Compute the statistics.  Temporary results during the calculations for
@@ -718,7 +719,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			ivinfo.estimated_count = true;
 			ivinfo.message_level = elevel;
 			ivinfo.num_heap_tuples = onerel->rd_rel->reltuples;
-			ivinfo.strategy = vac_strategy;
+			ivinfo.strategy = bstrategy;
 
 			stats = index_vacuum_cleanup(&ivinfo, NULL);
 
@@ -1129,10 +1130,10 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
  * Read stream callback returning the next BlockNumber as chosen by the
  * BlockSampling algorithm.
  */
-static BlockNumber
-block_sampling_read_stream_next(ReadStream *stream,
-								void *callback_private_data,
-								void *per_buffer_data)
+BlockNumber
+analyze_block_sampling_stream_read_next(ReadStream *stream,
+										void *callback_private_data,
+										void *per_buffer_data)
 {
 	BlockSamplerData *bs = callback_private_data;
 
@@ -1175,7 +1176,8 @@ block_sampling_read_stream_next(ReadStream *stream,
 static int
 acquire_sample_rows(Relation onerel, int elevel,
 					HeapTuple *rows, int targrows,
-					double *totalrows, double *totaldeadrows)
+					double *totalrows, double *totaldeadrows,
+					BufferAccessStrategy bstrategy)
 {
 	int			numrows = 0;	/* # rows now in reservoir */
 	double		samplerows = 0; /* total # rows collected */
@@ -1191,7 +1193,6 @@ acquire_sample_rows(Relation onerel, int elevel,
 	TableScanDesc scan;
 	BlockNumber nblocks;
 	BlockNumber blksdone = 0;
-	ReadStream *stream;
 
 	Assert(targrows > 0);
 
@@ -1211,19 +1212,11 @@ acquire_sample_rows(Relation onerel, int elevel,
 	/* Prepare for sampling rows */
 	reservoir_init_selection_state(&rstate, targrows);
 
-	scan = table_beginscan_analyze(onerel);
+	scan = table_beginscan_analyze(onerel, bstrategy, &bs);
 	slot = table_slot_create(onerel, NULL);
 
-	stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE,
-										vac_strategy,
-										scan->rs_rd,
-										MAIN_FORKNUM,
-										block_sampling_read_stream_next,
-										&bs,
-										0);
-
 	/* Outer loop over blocks to sample */
-	while (table_scan_analyze_next_block(scan, stream))
+	while (table_scan_analyze_next_block(scan))
 	{
 		vacuum_delay_point();
 
@@ -1275,8 +1268,6 @@ acquire_sample_rows(Relation onerel, int elevel,
 		pgstat_progress_update_param(PROGRESS_ANALYZE_BLOCKS_DONE,
 									 ++blksdone);
 	}
-
-	read_stream_end(stream);
 
 	ExecDropSingleTupleTableSlot(slot);
 	table_endscan(scan);
@@ -1362,7 +1353,8 @@ compare_rows(const void *a, const void *b, void *arg)
 static int
 acquire_inherited_sample_rows(Relation onerel, int elevel,
 							  HeapTuple *rows, int targrows,
-							  double *totalrows, double *totaldeadrows)
+							  double *totalrows, double *totaldeadrows,
+							  BufferAccessStrategy bstrategy)
 {
 	List	   *tableOIDs;
 	Relation   *rels;
@@ -1554,7 +1546,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 				/* Fetch a random sample of the child's rows */
 				childrows = (*acquirefunc) (childrel, elevel,
 											rows + numrows, childtargrows,
-											&trows, &tdrows);
+											&trows, &tdrows, bstrategy);
 
 				/* We may need to convert from child's rowtype to parent's */
 				if (childrows > 0 &&

@@ -24,7 +24,7 @@
 #include "storage/read_stream.h"
 #include "utils/rel.h"
 #include "utils/snapshot.h"
-
+#include "utils/sampling.h"
 
 #define DEFAULT_TABLE_ACCESS_METHOD	"heap"
 
@@ -329,6 +329,7 @@ typedef struct TableAmRoutine
 								 Snapshot snapshot,
 								 int nkeys, struct ScanKeyData *key,
 								 ParallelTableScanDesc pscan,
+								 BufferAccessStrategy bstrategy, BlockSampler block_sampler,
 								 uint32 flags);
 
 	/*
@@ -656,8 +657,9 @@ typedef struct TableAmRoutine
 									BufferAccessStrategy bstrategy);
 
 	/*
-	 * Prepare to analyze block `blockno` of `scan`. The scan has been started
-	 * with table_beginscan_analyze().  See also
+	 * Prepare to analyze next block of `scan`.
+	 *
+	 * The scan has been started with table_beginscan_analyze().  See also
 	 * table_scan_analyze_next_block().
 	 *
 	 * The callback may acquire resources like locks that are held until
@@ -672,8 +674,7 @@ typedef struct TableAmRoutine
 	 * clear what a good interface for non block based AMs would be, so there
 	 * isn't one yet.
 	 */
-	bool		(*scan_analyze_next_block) (TableScanDesc scan,
-											ReadStream *stream);
+	bool		(*scan_analyze_next_block) (TableScanDesc scan);
 
 	/*
 	 * See table_scan_analyze_next_tuple().
@@ -911,7 +912,7 @@ table_beginscan(Relation rel, Snapshot snapshot,
 	uint32		flags = SO_TYPE_SEQSCAN |
 		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
 
-	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, flags);
+	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, NULL, NULL, flags);
 }
 
 /*
@@ -940,7 +941,7 @@ table_beginscan_strat(Relation rel, Snapshot snapshot,
 	if (allow_sync)
 		flags |= SO_ALLOW_SYNC;
 
-	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, flags);
+	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, NULL, NULL, flags);
 }
 
 /*
@@ -958,7 +959,7 @@ table_beginscan_bm(Relation rel, Snapshot snapshot,
 	if (need_tuple)
 		flags |= SO_NEED_TUPLES;
 
-	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, flags);
+	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, NULL, NULL, flags);
 }
 
 /*
@@ -983,7 +984,7 @@ table_beginscan_sampling(Relation rel, Snapshot snapshot,
 	if (allow_pagemode)
 		flags |= SO_ALLOW_PAGEMODE;
 
-	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, flags);
+	return rel->rd_tableam->scan_begin(rel, snapshot, nkeys, key, NULL, NULL, NULL, flags);
 }
 
 /*
@@ -996,7 +997,7 @@ table_beginscan_tid(Relation rel, Snapshot snapshot)
 {
 	uint32		flags = SO_TYPE_TIDSCAN;
 
-	return rel->rd_tableam->scan_begin(rel, snapshot, 0, NULL, NULL, flags);
+	return rel->rd_tableam->scan_begin(rel, snapshot, 0, NULL, NULL, NULL, NULL, flags);
 }
 
 /*
@@ -1005,11 +1006,11 @@ table_beginscan_tid(Relation rel, Snapshot snapshot)
  * the same data structure although the behavior is rather different.
  */
 static inline TableScanDesc
-table_beginscan_analyze(Relation rel)
+table_beginscan_analyze(Relation rel, BufferAccessStrategy bstrategy, BlockSampler block_sampler)
 {
 	uint32		flags = SO_TYPE_ANALYZE;
 
-	return rel->rd_tableam->scan_begin(rel, NULL, 0, NULL, NULL, flags);
+	return rel->rd_tableam->scan_begin(rel, NULL, 0, NULL, NULL, bstrategy, block_sampler, flags);
 }
 
 /*
@@ -1088,7 +1089,7 @@ table_beginscan_tidrange(Relation rel, Snapshot snapshot,
 	TableScanDesc sscan;
 	uint32		flags = SO_TYPE_TIDRANGESCAN | SO_ALLOW_PAGEMODE;
 
-	sscan = rel->rd_tableam->scan_begin(rel, snapshot, 0, NULL, NULL, flags);
+	sscan = rel->rd_tableam->scan_begin(rel, snapshot, 0, NULL, NULL, NULL, NULL, flags);
 
 	/* Set the range of TIDs to scan */
 	sscan->rs_rd->rd_tableam->scan_set_tidrange(sscan, mintid, maxtid);
@@ -1719,9 +1720,9 @@ table_relation_vacuum(Relation rel, struct VacuumParams *params,
  * Returns false if block is unsuitable for sampling, true otherwise.
  */
 static inline bool
-table_scan_analyze_next_block(TableScanDesc scan, ReadStream *stream)
+table_scan_analyze_next_block(TableScanDesc scan)
 {
-	return scan->rs_rd->rd_tableam->scan_analyze_next_block(scan, stream);
+	return scan->rs_rd->rd_tableam->scan_analyze_next_block(scan);
 }
 
 /*

@@ -1001,7 +1001,7 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
  * items of the heap page are analyzed.
  */
 static bool
-heapam_scan_analyze_next_block(TableScanDesc scan, ReadStream *stream)
+heapam_scan_analyze_next_block(TableScanDesc scan)
 {
 	HeapScanDesc hscan = (HeapScanDesc) scan;
 
@@ -1013,7 +1013,7 @@ heapam_scan_analyze_next_block(TableScanDesc scan, ReadStream *stream)
 	 * re-acquire sharelock for each tuple, but since we aren't doing much
 	 * work per tuple, the extra lock traffic is probably better avoided.
 	 */
-	hscan->rs_cbuf = read_stream_next_buffer(stream, NULL);
+	hscan->rs_cbuf = read_stream_next_buffer(hscan->rs_read_stream, NULL);
 	if (!BufferIsValid(hscan->rs_cbuf))
 		return false;
 

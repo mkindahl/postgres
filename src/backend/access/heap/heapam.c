@@ -291,7 +291,8 @@ heap_scan_stream_read_next_serial(ReadStream *stream,
  * ----------------
  */
 static void
-initscan(HeapScanDesc scan, ScanKey key, bool keep_startblock)
+initscan(HeapScanDesc scan, ScanKey key, BufferAccessStrategy bstrategy,
+		 BlockSampler block_sampler, bool keep_startblock)
 {
 	ParallelBlockTableScanDesc bpscan = NULL;
 	bool		allow_strat;
@@ -1038,6 +1039,7 @@ TableScanDesc
 heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key,
 			   ParallelTableScanDesc parallel_scan,
+			   BufferAccessStrategy bstrategy, BlockSampler block_sampler,
 			   uint32 flags)
 {
 	HeapScanDesc scan;
@@ -1116,7 +1118,7 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	else
 		scan->rs_base.rs_key = NULL;
 
-	initscan(scan, key, false);
+	initscan(scan, key, bstrategy, block_sampler, false);
 
 	scan->rs_read_stream = NULL;
 
@@ -1141,6 +1143,16 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 														  MAIN_FORKNUM,
 														  cb,
 														  scan,
+														  0);
+	}
+	else if (scan->rs_base.rs_flags & SO_TYPE_ANALYZE)
+	{
+		scan->rs_read_stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE,
+														  scan->rs_strategy,
+														  scan->rs_base.rs_rd,
+														  MAIN_FORKNUM,
+														  analyze_block_sampling_stream_read_next,
+														  block_sampler,
 														  0);
 	}
 
@@ -1203,7 +1215,7 @@ heap_rescan(TableScanDesc sscan, ScanKey key, bool set_params,
 	/*
 	 * reinitialize scan descriptor
 	 */
-	initscan(scan, key, true);
+	initscan(scan, key, scan->rs_strategy, NULL, true);
 }
 
 void
