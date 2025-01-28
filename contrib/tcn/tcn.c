@@ -66,13 +66,14 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;
 	char	   *channel;
 	char		operation;
-	StringInfo	payload = makeStringInfo();
+	StringInfoData payload;
 	bool		foundPK;
 
 	List	   *indexoidlist;
 	ListCell   *indexoidscan;
 
 	/* make sure it's called as a trigger */
+	initStringInfo(&payload);
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
@@ -149,22 +150,30 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 
 				foundPK = true;
 
-				strcpy_quoted(payload, RelationGetRelationName(rel), '"');
-				appendStringInfoCharMacro(payload, ',');
-				appendStringInfoCharMacro(payload, operation);
+				strcpy_quoted(&payload,
+							  RelationGetRelationName(rel),
+							  '"');
+				appendStringInfoCharMacro(&payload, ',');
+				appendStringInfoCharMacro(&payload, operation);
 
 				for (i = 0; i < indnkeyatts; i++)
 				{
 					int			colno = index->indkey.values[i];
 					Form_pg_attribute attr = TupleDescAttr(tupdesc, colno - 1);
 
-					appendStringInfoCharMacro(payload, ',');
-					strcpy_quoted(payload, NameStr(attr->attname), '"');
-					appendStringInfoCharMacro(payload, '=');
-					strcpy_quoted(payload, SPI_getvalue(trigtuple, tupdesc, colno), '\'');
+					appendStringInfoCharMacro(&payload,
+											  ',');
+					strcpy_quoted(&payload,
+								  NameStr(attr->attname),
+								  '"');
+					appendStringInfoCharMacro(&payload,
+											  '=');
+					strcpy_quoted(&payload,
+								  SPI_getvalue(trigtuple, tupdesc, colno),
+								  '\'');
 				}
 
-				Async_Notify(channel, payload->data);
+				Async_Notify(channel, payload.data);
 			}
 			ReleaseSysCache(indexTuple);
 			break;

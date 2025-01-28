@@ -4607,11 +4607,12 @@ Datum
 jsonb_pretty(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
-	StringInfo	str = makeStringInfo();
+	StringInfoData str;
 
-	JsonbToCStringIndent(str, &jb->root, VARSIZE(jb));
+	initStringInfo(&str);
+	JsonbToCStringIndent(&str, &jb->root, VARSIZE(jb));
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(str->data, str->len));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(str.data, str.len));
 }
 
 /*

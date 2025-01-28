@@ -491,20 +491,19 @@ static void
 check_publications(WalReceiverConn *wrconn, List *publications)
 {
 	WalRcvExecResult *res;
-	StringInfo	cmd;
+	StringInfoData cmd;
 	TupleTableSlot *slot;
 	List	   *publicationsCopy = NIL;
 	Oid			tableRow[1] = {TEXTOID};
 
-	cmd = makeStringInfo();
-	appendStringInfoString(cmd, "SELECT t.pubname FROM\n"
+	initStringInfo(&cmd);
+	appendStringInfoString(&cmd, "SELECT t.pubname FROM\n"
 						   " pg_catalog.pg_publication t WHERE\n"
 						   " t.pubname IN (");
-	GetPublicationsStr(publications, cmd, true);
-	appendStringInfoChar(cmd, ')');
+	GetPublicationsStr(publications, &cmd, true);
+	appendStringInfoChar(&cmd, ')');
 
-	res = walrcv_exec(wrconn, cmd->data, 1, tableRow);
-	destroyStringInfo(cmd);
+	res = walrcv_exec(wrconn, cmd.data, 1, tableRow);
 
 	if (res->status != WALRCV_OK_TUPLES)
 		ereport(ERROR,
@@ -535,15 +534,16 @@ check_publications(WalReceiverConn *wrconn, List *publications)
 	if (list_length(publicationsCopy))
 	{
 		/* Prepare the list of non-existent publication(s) for error message. */
-		StringInfo	pubnames = makeStringInfo();
+		StringInfoData pubnames;
 
-		GetPublicationsStr(publicationsCopy, pubnames, false);
+		initStringInfo(&pubnames);
+		GetPublicationsStr(publicationsCopy, &pubnames, false);
 		ereport(WARNING,
 				errcode(ERRCODE_UNDEFINED_OBJECT),
 				errmsg_plural("publication %s does not exist on the publisher",
 							  "publications %s do not exist on the publisher",
 							  list_length(publicationsCopy),
-							  pubnames->data));
+							  pubnames.data));
 	}
 }
 
@@ -2597,33 +2597,38 @@ check_publications_origin_tables(WalReceiverConn *wrconn, List *publications,
 	 */
 	if (publist)
 	{
-		StringInfo	pubnames = makeStringInfo();
-		StringInfo	err_msg = makeStringInfo();
-		StringInfo	err_hint = makeStringInfo();
+		StringInfoData	pubnames;
+		StringInfoData	err_msg;
+		StringInfoData err_hint;
 
 		/* Prepare the list of publication(s) for warning message. */
-		GetPublicationsStr(publist, pubnames, false);
+		initStringInfo(&pubnames);
+		initStringInfo(&err_msg);
+		initStringInfo(&err_hint);
+		GetPublicationsStr(publist, &pubnames, false);
 
 		if (check_table_sync)
 		{
-			appendStringInfo(err_msg, _("subscription \"%s\" requested copy_data with origin = NONE but might copy data that had a different origin"),
+			appendStringInfo(&err_msg, _("subscription \"%s\" requested copy_data with origin = NONE but might copy data that had a different origin"),
 							 subname);
-			appendStringInfoString(err_hint, _("Verify that initial data copied from the publisher tables did not come from other origins."));
+			appendStringInfoString(&err_hint,
+					       _("Verify that initial data copied from the publisher tables did not come from other origins."));
 		}
 		else
 		{
-			appendStringInfo(err_msg, _("subscription \"%s\" enabled retain_dead_tuples but might not reliably detect conflicts for changes from different origins"),
+			appendStringInfo(&err_msg, _("subscription \"%s\" enabled retain_dead_tuples but might not reliably detect conflicts for changes from different origins"),
 							 subname);
-			appendStringInfoString(err_hint, _("Consider using origin = NONE or disabling retain_dead_tuples."));
+			appendStringInfoString(&err_hint,
+					       _("Consider using origin = NONE or disabling retain_dead_tuples."));
 		}
 
 		ereport(WARNING,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				errmsg_internal("%s", err_msg->data),
+				errmsg_internal("%s", err_msg.data),
 				errdetail_plural("The subscription subscribes to a publication (%s) that contains tables that are written to by other subscriptions.",
 								 "The subscription subscribes to publications (%s) that contain tables that are written to by other subscriptions.",
-								 list_length(publist), pubnames->data),
-				errhint_internal("%s", err_hint->data));
+								 list_length(publist), pubnames.data),
+				errhint_internal("%s", err_hint.data));
 	}
 
 	ExecDropSingleTupleTableSlot(slot);
@@ -2716,14 +2721,16 @@ check_publications_origin_sequences(WalReceiverConn *wrconn, List *publications,
 	{
 		StringInfo	pubnames = makeStringInfo();
 		StringInfo	err_msg = makeStringInfo();
-		StringInfo	err_hint = makeStringInfo();
+		StringInfoData err_hint;
 
 		/* Prepare the list of publication(s) for warning message. */
+		initStringInfo(&err_hint);
 		GetPublicationsStr(publist, pubnames, false);
 
 		appendStringInfo(err_msg, _("subscription \"%s\" requested copy_data with origin = NONE but might copy data that had a different origin"),
 						 subname);
-		appendStringInfoString(err_hint, _("Verify that initial data copied from the publisher sequences did not come from other origins."));
+		appendStringInfoString(&err_hint,
+				       _("Verify that initial data copied from the publisher sequences did not come from other origins."));
 
 		ereport(WARNING,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -2731,7 +2738,7 @@ check_publications_origin_sequences(WalReceiverConn *wrconn, List *publications,
 				errdetail_plural("The subscription subscribes to a publication (%s) that contains sequences that are written to by other subscriptions.",
 								 "The subscription subscribes to publications (%s) that contain sequences that are written to by other subscriptions.",
 								 list_length(publist), pubnames->data),
-				errhint_internal("%s", err_hint->data));
+				errhint_internal("%s", err_hint.data));
 	}
 
 	ExecDropSingleTupleTableSlot(slot);
@@ -2885,12 +2892,13 @@ fetch_relation_list(WalReceiverConn *wrconn, List *publications)
 	int			server_version = walrcv_server_version(wrconn);
 	bool		check_columnlist = (server_version >= 150000);
 	int			column_count = check_columnlist ? 4 : 3;
-	StringInfo	pub_names = makeStringInfo();
+	StringInfoData pub_names;
 
+	initStringInfo(&pub_names);
 	initStringInfo(&cmd);
 
 	/* Build the pub_names comma-separated string. */
-	GetPublicationsStr(publications, pub_names, true);
+	GetPublicationsStr(publications, &pub_names, true);
 
 	/* Get the list of relations from the publisher */
 	if (server_version >= 160000)
@@ -2917,7 +2925,7 @@ fetch_relation_list(WalReceiverConn *wrconn, List *publications)
 						 "                FROM pg_publication\n"
 						 "                WHERE pubname IN ( %s )) AS gpt\n"
 						 "             ON gpt.relid = c.oid\n",
-						 pub_names->data);
+						 pub_names.data);
 
 		/* From version 19, inclusion of sequences in the target is supported */
 		if (server_version >= 190000)
@@ -2926,7 +2934,7 @@ fetch_relation_list(WalReceiverConn *wrconn, List *publications)
 							 "  SELECT DISTINCT s.schemaname, s.sequencename, " CppAsString2(RELKIND_SEQUENCE) "::\"char\" AS relkind, NULL::int2vector AS attrs\n"
 							 "  FROM pg_catalog.pg_publication_sequences s\n"
 							 "  WHERE s.pubname IN ( %s )",
-							 pub_names->data);
+							 pub_names.data);
 	}
 	else
 	{
@@ -2939,10 +2947,8 @@ fetch_relation_list(WalReceiverConn *wrconn, List *publications)
 
 		appendStringInfo(&cmd, "FROM pg_catalog.pg_publication_tables t\n"
 						 " WHERE t.pubname IN ( %s )",
-						 pub_names->data);
+						 pub_names.data);
 	}
-
-	destroyStringInfo(pub_names);
 
 	res = walrcv_exec(wrconn, cmd.data, column_count, tableRow);
 	pfree(cmd.data);
