@@ -672,4 +672,14 @@ pg_cmp_size(size_t a, size_t b)
 	return (a > b) - (a < b);
 }
 
+/*
+ * This is used when you want to compare "raw" datums and just want some
+ * order, but don't care what it is as long as it is consistent.
+ */
+static inline int
+pg_cmp_datum(Datum a, Datum b)
+{
+	return pg_cmp_size(a.usize, b.usize);
+}
+
 #endif							/* COMMON_INT_H */

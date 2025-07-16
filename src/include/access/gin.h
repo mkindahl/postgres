@@ -81,13 +81,13 @@ StaticAssertDecl(sizeof(GinTernaryValue) == sizeof(bool),
 static inline GinTernaryValue
 DatumGetGinTernaryValue(Datum X)
 {
-	return (GinTernaryValue) X;
+	return (GinTernaryValue) DatumGetInt32(X);
 }
 
 static inline Datum
 GinTernaryValueGetDatum(GinTernaryValue X)
 {
-	return (Datum) X;
+	return Int32GetDatum(X);
 }
 
 #define PG_RETURN_GIN_TERNARY_VALUE(x) return GinTernaryValueGetDatum(x)
