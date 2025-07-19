@@ -2720,9 +2720,9 @@ Datum
 hash_numeric(PG_FUNCTION_ARGS)
 {
 	Numeric		key = PG_GETARG_NUMERIC(0);
-	Datum		digit_hash;
-	Datum		result;
-	int			weight;
+	uint32		digit_hash;
+	uint32		result;
+	uint32		weight;
 	int			start_offset;
 	int			end_offset;
 	int			i;
@@ -2783,13 +2783,13 @@ hash_numeric(PG_FUNCTION_ARGS)
 	 * this shouldn't affect correctness.
 	 */
 	hash_len = NUMERIC_NDIGITS(key) - start_offset - end_offset;
-	digit_hash = hash_any((unsigned char *) (NUMERIC_DIGITS(key) + start_offset),
+	digit_hash = hash_bytes((unsigned char *) (NUMERIC_DIGITS(key) + start_offset),
 						  hash_len * sizeof(NumericDigit));
 
 	/* Mix in the weight, via XOR */
 	result = digit_hash ^ weight;
 
-	PG_RETURN_DATUM(result);
+	PG_RETURN_UINT32(result);
 }
 
 /*
