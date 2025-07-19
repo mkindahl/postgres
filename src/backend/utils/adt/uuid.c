@@ -389,7 +389,7 @@ uuid_abbrev_convert(Datum original, SortSupport ssup)
 {
 	uuid_sortsupport_state *uss = ssup->ssup_extra;
 	pg_uuid_t  *authoritative = DatumGetUUIDP(original);
-	Datum		res;
+	uint64		res;
 
 	memcpy(&res, authoritative->data, sizeof(Datum));
 	uss->input_count += 1;
@@ -400,7 +400,7 @@ uuid_abbrev_convert(Datum original, SortSupport ssup)
 
 		tmp = DatumGetUInt32(res) ^ (uint32) (DatumGetUInt64(res) >> 32);
 
-		addHyperLogLog(&uss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
+		addHyperLogLog(&uss->abbr_card, hash_bytes_uint32(tmp));
 	}
 
 	/*
@@ -411,9 +411,9 @@ uuid_abbrev_convert(Datum original, SortSupport ssup)
 	 * this, the comparator would have to call memcmp() with a pair of
 	 * pointers to the first byte of each abbreviated key, which is slower.
 	 */
-	res = DatumBigEndianToNative(res);
+	res = pg_bswap64(res);
 
-	return res;
+	return UInt64GetDatum(res);
 }
 
 static Datum
