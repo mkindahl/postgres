@@ -478,7 +478,7 @@ macaddr_abbrev_convert(Datum original, SortSupport ssup)
 {
 	macaddr_sortsupport_state *uss = ssup->ssup_extra;
 	macaddr    *authoritative = DatumGetMacaddrP(original);
-	Datum		res;
+	uint64		res;
 
 	/*
 	 * Zero out the 8-byte Datum and copy in the 6 bytes of the MAC address.
@@ -502,7 +502,7 @@ macaddr_abbrev_convert(Datum original, SortSupport ssup)
 
 		tmp = DatumGetUInt32(res) ^ (uint32) (DatumGetUInt64(res) >> 32);
 
-		addHyperLogLog(&uss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
+		addHyperLogLog(&uss->abbr_card, hash_bytes_uint32(tmp));
 	}
 
 	/*
@@ -513,7 +513,7 @@ macaddr_abbrev_convert(Datum original, SortSupport ssup)
 	 * comparator would have to call memcmp() with a pair of pointers to the
 	 * first byte of each abbreviated key, which is slower.
 	 */
-	res = DatumBigEndianToNative(res);
+	res = pg_bswap64(res);
 
-	return res;
+	return UInt64GetDatum(res);
 }
