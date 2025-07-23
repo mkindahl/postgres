@@ -594,8 +594,8 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 {
 	network_sortsupport_state *uss = ssup->ssup_extra;
 	inet	   *authoritative = DatumGetInetPP(original);
-	Datum		res,
-				ipaddr_datum,
+	uint64		res,
+		        ipaddr_datum,
 				subnet_bitmask,
 				network;
 	int			subnet_size;
@@ -626,11 +626,11 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 #endif
 
 		/* Initialize result without setting ipfamily bit */
-		res = (Datum) 0;
+		res = 0;
 	}
 	else
 	{
-		memcpy(&ipaddr_datum, ip_addr(authoritative), sizeof(Datum));
+		memcpy(&ipaddr_datum, ip_addr(authoritative), sizeof(ipaddr_datum));
 
 		/* Must byteswap on little-endian machines */
 		ipaddr_datum = DatumBigEndianToNative(ipaddr_datum);
@@ -661,13 +661,13 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 	if (ip_bits(authoritative) == 0)
 	{
 		/* Fit as many ipaddr bits as possible into subnet */
-		subnet_bitmask = ((Datum) 0) - 1;
+		subnet_bitmask = 0UL - 1;
 		network = 0;
 	}
 	else if (ip_bits(authoritative) < sizeof(Datum) * BITS_PER_BYTE)
 	{
 		/* Split ipaddr bits between network and subnet */
-		subnet_bitmask = (((Datum) 1) << subnet_size) - 1;
+		subnet_bitmask = (1UL << subnet_size) - 1;
 		network = ipaddr_datum & ~subnet_bitmask;
 	}
 	else
@@ -683,8 +683,8 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 		 * IPv4: keep all 32 netmasked bits, netmask size, and most
 		 * significant 25 subnet bits
 		 */
-		Datum		netmask_size = (Datum) ip_bits(authoritative);
-		Datum		subnet;
+		uint64		netmask_size = ip_bits(authoritative);
+		uint64		subnet;
 
 		/*
 		 * Shift left 31 bits: 6 bits netmask size + 25 subnet bits.
@@ -746,7 +746,7 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 		addHyperLogLog(&uss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
 	}
 
-	return res;
+	return UInt64GetDatum(res);
 }
 
 /*
