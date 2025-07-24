@@ -1358,7 +1358,7 @@ HeapTuple
 SearchCatCache1(CatCache *cache,
 				Datum v1)
 {
-	return SearchCatCacheInternal(cache, 1, v1, 0, 0, 0);
+	return SearchCatCacheInternal(cache, 1, v1, UndefinedDatum, UndefinedDatum, UndefinedDatum);
 }
 
 
@@ -1366,7 +1366,7 @@ HeapTuple
 SearchCatCache2(CatCache *cache,
 				Datum v1, Datum v2)
 {
-	return SearchCatCacheInternal(cache, 2, v1, v2, 0, 0);
+	return SearchCatCacheInternal(cache, 2, v1, v2, UndefinedDatum, UndefinedDatum);
 }
 
 
@@ -1374,7 +1374,7 @@ HeapTuple
 SearchCatCache3(CatCache *cache,
 				Datum v1, Datum v2, Datum v3)
 {
-	return SearchCatCacheInternal(cache, 3, v1, v2, v3, 0);
+	return SearchCatCacheInternal(cache, 3, v1, v2, v3, UndefinedDatum);
 }
 
 
