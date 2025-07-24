@@ -20,6 +20,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include "c.h"
 #include "postgres.h"
 
 #include "access/amapi.h"
@@ -2549,7 +2550,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 											   index_rel->rd_rel->relam);
 				if (indclass->values[i] != defopclass ||
 					attform->attcollation != index_rel->rd_indcollation[i] ||
-					attoptions != UndefinedDatum ||
+					PointerIsValid(DatumGetPointer(attoptions)) ||
 					index_rel->rd_indoption[i] != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
