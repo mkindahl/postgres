@@ -628,7 +628,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_DONE_NO_RETURN)
 		{
 			Assert(isnull == NULL);
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 
 		EEO_CASE(EEOP_INNER_FETCHSOME)
@@ -1078,7 +1078,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			}
 			else if (*op->d.boolexpr.anynull)
 			{
-				*op->resvalue = (Datum) 0;
+				*op->resvalue = UndefinedDatum;
 				*op->resnull = true;
 			}
 			else
@@ -1145,7 +1145,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			}
 			else if (*op->d.boolexpr.anynull)
 			{
-				*op->resvalue = (Datum) 0;
+				*op->resvalue = UndefinedDatum;
 				*op->resnull = true;
 			}
 			else
@@ -1535,7 +1535,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				/* if the arguments are equal return null */
 				if (!fcinfo->isnull && DatumGetBool(result))
 				{
-					*op->resvalue = (Datum) 0;
+					*op->resvalue = UndefinedDatum;
 					*op->resnull = true;
 
 					EEO_NEXT();
@@ -1587,7 +1587,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			 */
 			if (state->flags & op->d.returningexpr.nullflag)
 			{
-				*op->resvalue = (Datum) 0;
+				*op->resvalue = UndefinedDatum;
 				*op->resnull = true;
 
 				EEO_JUMP(op->d.returningexpr.jumpdone);
@@ -1815,7 +1815,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			if (!fcinfo->args[0].isnull)
 				*op->resvalue = op->d.hashdatum.fn_addr(fcinfo);
 			else
-				*op->resvalue = (Datum) 0;
+				*op->resvalue = UndefinedDatum;
 
 			*op->resnull = false;
 
@@ -1834,7 +1834,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				 * finding a NULL.
 				 */
 				*op->resnull = true;
-				*op->resvalue = (Datum) 0;
+				*op->resvalue = UndefinedDatum;
 				EEO_JUMP(op->d.hashdatum.jumpdone);
 			}
 
@@ -1882,7 +1882,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				 * finding a NULL.
 				 */
 				*op->resnull = true;
-				*op->resvalue = (Datum) 0;
+				*op->resvalue = UndefinedDatum;
 				EEO_JUMP(op->d.hashdatum.jumpdone);
 			}
 			else
@@ -2275,7 +2275,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 out_error:
 	pg_unreachable();
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -2655,7 +2655,7 @@ ExecJustApplyFuncToCase(ExprState *state, ExprContext *econtext, bool *isnull)
 		if (args[argno].isnull)
 		{
 			*isnull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 	}
 	fcinfo->isnull = false;
@@ -2817,7 +2817,7 @@ ExecJustHashVarImpl(ExprState *state, TupleTableSlot *slot, bool *isnull)
 	if (!fcinfo->args[0].isnull)
 		return hashop->d.hashdatum.fn_addr(fcinfo);
 	else
-		return (Datum) 0;
+		return UndefinedDatum;
 }
 
 /* implementation for hashing an outer Var */
@@ -2851,7 +2851,7 @@ ExecJustHashVarVirtImpl(ExprState *state, TupleTableSlot *slot, bool *isnull)
 	if (!fcinfo->args[0].isnull)
 		return hashop->d.hashdatum.fn_addr(fcinfo);
 	else
-		return (Datum) 0;
+		return UndefinedDatum;
 }
 
 /* Like ExecJustHashInnerVar, optimized for virtual slots */
@@ -2898,7 +2898,7 @@ ExecJustHashOuterVarStrict(ExprState *state, ExprContext *econtext,
 	{
 		/* return NULL on NULL input */
 		*isnull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 }
 
@@ -3176,7 +3176,7 @@ ExecEvalCoerceViaIOSafe(ExprState *state, ExprEvalStep *op)
 		if (SOFT_ERROR_OCCURRED(fcinfo_in->context))
 		{
 			*op->resnull = true;
-			*op->resvalue = (Datum) 0;
+			*op->resvalue = UndefinedDatum;
 			return;
 		}
 
@@ -4104,7 +4104,7 @@ ExecEvalScalarArrayOp(ExprState *state, ExprEvalStep *op)
 		/* Get array element, checking for NULL */
 		if (bitmap && (*bitmap & bitmask) == 0)
 		{
-			fcinfo->args[1].value = (Datum) 0;
+			fcinfo->args[1].value = UndefinedDatum;
 			fcinfo->args[1].isnull = true;
 		}
 		else
@@ -4120,7 +4120,7 @@ ExecEvalScalarArrayOp(ExprState *state, ExprEvalStep *op)
 		if (fcinfo->args[1].isnull && strictfunc)
 		{
 			fcinfo->isnull = true;
-			thisresult = (Datum) 0;
+			thisresult = UndefinedDatum;
 		}
 		else
 		{
@@ -4368,7 +4368,7 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 			 * We have nulls in the array so a non-null lhs and no match must
 			 * yield NULL.
 			 */
-			result = (Datum) 0;
+			result = UndefinedDatum;
 			resultnull = true;
 		}
 		else
@@ -4382,7 +4382,7 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 			 */
 			fcinfo->args[0].value = scalar;
 			fcinfo->args[0].isnull = scalar_isnull;
-			fcinfo->args[1].value = (Datum) 0;
+			fcinfo->args[1].value = UndefinedDatum;
 			fcinfo->args[1].isnull = true;
 
 			result = DatumGetBool(op->d.hashedscalararrayop.finfo->fn_addr(fcinfo));
@@ -4445,7 +4445,7 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 	Datum		value;
 
 	*op->resnull = true;		/* until we get a result */
-	*op->resvalue = (Datum) 0;
+	*op->resvalue = UndefinedDatum;
 
 	switch (xexpr->op)
 	{
@@ -4684,7 +4684,7 @@ ExecEvalJsonConstructor(ExprState *state, ExprEvalStep *op,
 	{
 		if (jcstate->arg_nulls[0])
 		{
-			res = (Datum) 0;
+			res = UndefinedDatum;
 			isnull = true;
 		}
 		else
@@ -4704,7 +4704,7 @@ ExecEvalJsonConstructor(ExprState *state, ExprEvalStep *op,
 	{
 		if (jcstate->arg_nulls[0])
 		{
-			res = (Datum) 0;
+			res = UndefinedDatum;
 			isnull = true;
 		}
 		else
@@ -4895,7 +4895,7 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 				if (jbv == NULL)
 				{
 					/* Will be coerced with json_populate_type(), if needed. */
-					*op->resvalue = (Datum) 0;
+					*op->resvalue = UndefinedDatum;
 					*op->resnull = true;
 				}
 				else if (!error && !empty)
@@ -4972,7 +4972,7 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 	/* Handle ON EMPTY. */
 	if (empty)
 	{
-		*op->resvalue = (Datum) 0;
+		*op->resvalue = UndefinedDatum;
 		*op->resnull = true;
 		if (jsexpr->on_empty)
 		{
@@ -5015,7 +5015,7 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 	if (error)
 	{
 		Assert(!throw_error);
-		*op->resvalue = (Datum) 0;
+		*op->resvalue = UndefinedDatum;
 		*op->resnull = true;
 		jsestate->error.value = BoolGetDatum(true);
 		/* Set up to catch coercion errors of the ON ERROR value. */
@@ -5137,7 +5137,7 @@ ExecEvalJsonCoercion(ExprState *state, ExprEvalStep *op,
 								   (Node *) escontext))
 			{
 				*op->resnull = true;
-				*op->resvalue = (Datum) 0;
+				*op->resvalue = UndefinedDatum;
 			}
 			else
 				*op->resvalue = DirectFunctionCall1(bool_int4, *op->resvalue);
@@ -5218,7 +5218,7 @@ ExecEvalJsonCoercionFinish(ExprState *state, ExprEvalStep *op)
 							GetJsonBehaviorValueString(jsestate->jsexpr->on_empty)),
 					 errdetail("%s", jsestate->escontext.error_data->message)));
 
-		*op->resvalue = (Datum) 0;
+		*op->resvalue = UndefinedDatum;
 		*op->resnull = true;
 
 		jsestate->error.value = BoolGetDatum(true);
@@ -5368,7 +5368,7 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 				case VAR_RETURNING_OLD:
 					if (state->flags & EEO_FLAG_OLD_IS_NULL)
 					{
-						*op->resvalue = (Datum) 0;
+						*op->resvalue = UndefinedDatum;
 						*op->resnull = true;
 						return;
 					}
@@ -5378,7 +5378,7 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 				case VAR_RETURNING_NEW:
 					if (state->flags & EEO_FLAG_NEW_IS_NULL)
 					{
-						*op->resvalue = (Datum) 0;
+						*op->resvalue = UndefinedDatum;
 						*op->resnull = true;
 						return;
 					}
@@ -5593,7 +5593,7 @@ ExecEvalSysVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext,
 		(op->d.var.varreturningtype == VAR_RETURNING_NEW &&
 		 state->flags & EEO_FLAG_NEW_IS_NULL))
 	{
-		*op->resvalue = (Datum) 0;
+		*op->resvalue = UndefinedDatum;
 		*op->resnull = true;
 		return;
 	}
@@ -5692,7 +5692,7 @@ ExecAggCopyTransValue(AggState *aggstate, AggStatePerTrans pertrans,
 		 * callers can safely compare newValue/oldValue without having to
 		 * check their respective nullness.
 		 */
-		newValue = (Datum) 0;
+		newValue = UndefinedDatum;
 	}
 
 	if (!oldValueIsNull)
@@ -5743,7 +5743,7 @@ ExecEvalPreOrderedDistinctSingle(AggState *aggstate, AggStatePerTrans pertrans)
 			MemoryContextSwitchTo(oldContext);
 		}
 		else
-			pertrans->lastdatum = (Datum) 0;
+			pertrans->lastdatum = UndefinedDatum;
 		pertrans->lastisnull = isnull;
 		return true;
 	}

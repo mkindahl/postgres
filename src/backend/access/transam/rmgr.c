@@ -166,5 +166,5 @@ pg_get_wal_resource_managers(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }

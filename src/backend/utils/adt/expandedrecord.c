@@ -1069,7 +1069,7 @@ expanded_record_fetch_field(ExpandedRecordHeader *erh, int fnumber,
 		if (ExpandedRecordIsEmpty(erh))
 		{
 			*isnull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 		/* Make sure we have deconstructed form */
 		deconstruct_expanded_record(erh);
@@ -1077,7 +1077,7 @@ expanded_record_fetch_field(ExpandedRecordHeader *erh, int fnumber,
 		if (unlikely(fnumber > erh->nfields))
 		{
 			*isnull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 		*isnull = erh->dnulls[fnumber - 1];
 		return erh->dvalues[fnumber - 1];
@@ -1088,7 +1088,7 @@ expanded_record_fetch_field(ExpandedRecordHeader *erh, int fnumber,
 		if (erh->fvalue == NULL)
 		{
 			*isnull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 		/* heap_getsysattr doesn't actually use tupdesc, so just pass null */
 		return heap_getsysattr(erh->fvalue, fnumber, NULL, isnull);
@@ -1584,7 +1584,7 @@ check_domain_for_new_tuple(ExpandedRecordHeader *erh, HeapTuple tuple)
 		/* We run domain_check in a short-lived context to limit cruft */
 		oldcxt = MemoryContextSwitchTo(get_short_term_cxt(erh));
 
-		domain_check((Datum) 0, true,
+		domain_check(UndefinedDatum, true,
 					 erh->er_decltypeid,
 					 &erh->er_domaininfo,
 					 erh->hdr.eoh_context);

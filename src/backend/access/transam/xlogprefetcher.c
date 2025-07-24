@@ -845,7 +845,7 @@ pg_stat_get_recovery_prefetch(PG_FUNCTION_ARGS)
 	values[9] = Int32GetDatum(SharedStats->io_depth);
 	tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

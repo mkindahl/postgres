@@ -2072,7 +2072,7 @@ extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
 				types_res[i] = TEXTOID;
 
 				if (PG_ARGISNULL(i + variadic_start))
-					args_res[i] = (Datum) 0;
+					args_res[i] = UndefinedDatum;
 				else
 					args_res[i] =
 						CStringGetTextDatum(PG_GETARG_POINTER(i + variadic_start));

@@ -3925,7 +3925,7 @@ JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper, bool *empty,
 	{
 		*error = true;
 		*empty = false;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	/*
@@ -3971,7 +3971,7 @@ JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper, bool *empty,
 		if (error)
 		{
 			*error = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 
 		if (column_name)
@@ -4464,7 +4464,7 @@ JsonTableGetValue(TableFuncScanState *state, int colnum,
 	/* Row pattern value is NULL */
 	if (current->isnull)
 	{
-		result = (Datum) 0;
+		result = UndefinedDatum;
 		*isnull = true;
 	}
 	/* Evaluate JsonExpr. */

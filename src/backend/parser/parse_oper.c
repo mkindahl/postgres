@@ -995,10 +995,10 @@ find_oper_cache_entry(OprCacheKey *key)
 		/* Arrange to flush cache on pg_operator and pg_cast changes */
 		CacheRegisterSyscacheCallback(OPERNAMENSP,
 									  InvalidateOprCacheCallBack,
-									  (Datum) 0);
+									  UndefinedDatum);
 		CacheRegisterSyscacheCallback(CASTSOURCETARGET,
 									  InvalidateOprCacheCallBack,
-									  (Datum) 0);
+									  UndefinedDatum);
 	}
 
 	/* Look for an existing entry */

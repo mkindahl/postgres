@@ -482,5 +482,5 @@ pg_get_dsm_registry_allocations(PG_FUNCTION_ARGS)
 	}
 	dshash_seq_term(&status);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }

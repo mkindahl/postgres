@@ -4846,7 +4846,7 @@ transformJsonBehavior(ParseState *pstate, JsonBehavior *behavior,
 static Node *
 GetJsonBehaviorConst(JsonBehaviorType btype, int location)
 {
-	Datum		val = (Datum) 0;
+	Datum		val = UndefinedDatum;
 	Oid			typid = JSONBOID;
 	int			len = -1;
 	bool		isbyval = false;
@@ -4880,7 +4880,7 @@ GetJsonBehaviorConst(JsonBehaviorType btype, int location)
 		case JSON_BEHAVIOR_NULL:
 		case JSON_BEHAVIOR_UNKNOWN:
 		case JSON_BEHAVIOR_EMPTY:
-			val = (Datum) 0;
+			val = UndefinedDatum;
 			isnull = true;
 			typid = INT4OID;
 			len = sizeof(int32);

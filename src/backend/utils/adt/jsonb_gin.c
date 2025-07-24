@@ -1401,7 +1401,7 @@ make_scalar_key(const JsonbValue *scalarVal, bool is_key)
 			break;
 		default:
 			elog(ERROR, "unrecognized jsonb scalar type: %d", scalarVal->type);
-			item = 0;			/* keep compiler quiet */
+			item = UndefinedDatum;			/* keep compiler quiet */
 			break;
 	}
 

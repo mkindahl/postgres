@@ -253,13 +253,13 @@ array_in(PG_FUNCTION_ARGS)
 	 */
 	p = string;
 	if (!ReadArrayDimensions(&p, &ndim, dim, lBound, string, escontext))
-		return (Datum) 0;
+		return UndefinedDatum;
 
 	if (ndim == 0)
 	{
 		/* No array dimensions, so next character should be a left brace */
 		if (*p != '{')
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed array literal: \"%s\"", string),
 					 errdetail("Array value must start with \"{\" or dimension information.")));
@@ -268,7 +268,7 @@ array_in(PG_FUNCTION_ARGS)
 	{
 		/* If array dimensions are given, expect '=' operator */
 		if (strncmp(p, ASSGN, strlen(ASSGN)) != 0)
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed array literal: \"%s\"", string),
 					 errdetail("Missing \"%s\" after array dimensions.",
@@ -279,7 +279,7 @@ array_in(PG_FUNCTION_ARGS)
 			p++;
 
 		if (*p != '{')
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed array literal: \"%s\"", string),
 					 errdetail("Array contents must start with \"{\".")));
@@ -296,13 +296,13 @@ array_in(PG_FUNCTION_ARGS)
 					  &values, &nulls,
 					  string,
 					  escontext))
-		return (Datum) 0;
+		return UndefinedDatum;
 
 	/* only whitespace is allowed after the closing brace */
 	while (*p)
 	{
 		if (!scanner_isspace(*p++))
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed array literal: \"%s\"", string),
 					 errdetail("Junk after closing right brace.")));
@@ -330,7 +330,7 @@ array_in(PG_FUNCTION_ARGS)
 			nbytes = att_align_nominal(nbytes, typalign);
 			/* check for overflow of total request */
 			if (!AllocSizeIsValid(nbytes))
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("array size exceeds the maximum allowed (%d)",
 								(int) MaxAllocSize)));
@@ -1880,14 +1880,14 @@ array_get_element(Datum arraydatum,
 	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
 	{
 		*isNull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 	for (i = 0; i < ndim; i++)
 	{
 		if (indx[i] < lb[i] || indx[i] >= (dim[i] + lb[i]))
 		{
 			*isNull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 	}
 
@@ -1902,7 +1902,7 @@ array_get_element(Datum arraydatum,
 	if (array_get_isnull(arraynullsptr, offset))
 	{
 		*isNull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	/*
@@ -1952,14 +1952,14 @@ array_get_element_expanded(Datum arraydatum,
 	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
 	{
 		*isNull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 	for (i = 0; i < ndim; i++)
 	{
 		if (indx[i] < lb[i] || indx[i] >= (dim[i] + lb[i]))
 		{
 			*isNull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 	}
 
@@ -1983,7 +1983,7 @@ array_get_element_expanded(Datum arraydatum,
 	if (dnulls && dnulls[offset])
 	{
 		*isNull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	/*
@@ -2711,7 +2711,7 @@ array_set_element_expanded(Datum arraydatum,
 	{
 		memmove(dvalues + addedbefore, dvalues, eah->nelems * sizeof(Datum));
 		for (i = 0; i < addedbefore; i++)
-			dvalues[i] = (Datum) 0;
+			dvalues[i] = UndefinedDatum;
 		if (dnulls)
 		{
 			memmove(dnulls + addedbefore, dnulls, eah->nelems * sizeof(bool));
@@ -2725,7 +2725,7 @@ array_set_element_expanded(Datum arraydatum,
 	if (addedafter > 0)
 	{
 		for (i = 0; i < addedafter; i++)
-			dvalues[eah->nelems + i] = (Datum) 0;
+			dvalues[eah->nelems + i] = UndefinedDatum;
 		if (dnulls)
 		{
 			for (i = 0; i < addedafter; i++)
@@ -3660,7 +3660,7 @@ deconstruct_array(ArrayType *array,
 		/* Get source element, checking for NULL */
 		if (bitmap && (*bitmap & bitmask) == 0)
 		{
-			elems[i] = (Datum) 0;
+			elems[i] = UndefinedDatum;
 			if (nulls)
 				nulls[i] = true;
 			else
@@ -4687,7 +4687,7 @@ array_iterate(ArrayIterator iterator, Datum *value, bool *isnull)
 		if (array_get_isnull(iterator->nullbitmap, iterator->current_item++))
 		{
 			*isnull = true;
-			*value = (Datum) 0;
+			*value = UndefinedDatum;
 		}
 		else
 		{
@@ -4720,7 +4720,7 @@ array_iterate(ArrayIterator iterator, Datum *value, bool *isnull)
 								 iterator->current_item++))
 			{
 				nulls[i] = true;
-				values[i] = (Datum) 0;
+				values[i] = UndefinedDatum;
 			}
 			else
 			{
@@ -6013,7 +6013,7 @@ array_fill_with_lower_bounds(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		value = 0;
+		value = UndefinedDatum;
 		isnull = true;
 	}
 
@@ -6052,7 +6052,7 @@ array_fill(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		value = 0;
+		value = UndefinedDatum;
 		isnull = true;
 	}
 
@@ -6648,7 +6648,8 @@ array_remove(PG_FUNCTION_ARGS)
 
 	array = array_replace_internal(array,
 								   search, search_isnull,
-								   (Datum) 0, true,
+								   UndefinedDatum,
+								   true,
 								   true, PG_GET_COLLATION(),
 								   fcinfo);
 	PG_RETURN_ARRAYTYPE_P(array);

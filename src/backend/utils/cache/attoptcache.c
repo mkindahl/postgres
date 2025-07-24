@@ -120,7 +120,7 @@ InitializeAttoptCache(void)
 	/* Watch for invalidation events. */
 	CacheRegisterSyscacheCallback(ATTNUM,
 								  InvalidateAttoptCacheCallback,
-								  (Datum) 0);
+								  UndefinedDatum);
 }
 
 /*

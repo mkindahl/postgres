@@ -1046,7 +1046,7 @@ slot_store_data(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 				 * LOGICALREP_COLUMN_UNCHANGED here, but if we do, treat it as
 				 * NULL.)
 				 */
-				slot->tts_values[i] = (Datum) 0;
+				slot->tts_values[i] = UndefinedDatum;
 				slot->tts_isnull[i] = true;
 			}
 
@@ -1060,7 +1060,7 @@ slot_store_data(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 			 * (missing values should be later filled using
 			 * slot_fill_defaults).
 			 */
-			slot->tts_values[i] = (Datum) 0;
+			slot->tts_values[i] = UndefinedDatum;
 			slot->tts_isnull[i] = true;
 		}
 	}
@@ -1157,7 +1157,7 @@ slot_modify_data(TupleTableSlot *slot, TupleTableSlot *srcslot,
 			else
 			{
 				/* must be LOGICALREP_COLUMN_NULL */
-				slot->tts_values[i] = (Datum) 0;
+				slot->tts_values[i] = UndefinedDatum;
 				slot->tts_isnull[i] = true;
 			}
 
@@ -5250,7 +5250,7 @@ start_apply(XLogRecPtr origin_startpos)
 		 * transaction loss as that transaction won't be sent again by the
 		 * server.
 		 */
-		replorigin_reset(0, (Datum) 0);
+		replorigin_reset(0, UndefinedDatum);
 
 		if (MySubscription->disableonerr)
 			DisableSubscriptionAndExit();
@@ -5475,11 +5475,11 @@ InitializeLogRepWorker(void)
 	 */
 	CacheRegisterSyscacheCallback(SUBSCRIPTIONOID,
 								  subscription_change_cb,
-								  (Datum) 0);
+								  UndefinedDatum);
 
 	CacheRegisterSyscacheCallback(AUTHOID,
 								  subscription_change_cb,
-								  (Datum) 0);
+								  UndefinedDatum);
 
 	if (am_tablesync_worker())
 		ereport(LOG,
@@ -5544,7 +5544,7 @@ SetupApplyOrSyncWorker(int worker_slot)
 	 * state may process a shutdown signal before committing the current apply
 	 * operation. So, it is important to register such a callback here.
 	 */
-	before_shmem_exit(replorigin_reset, (Datum) 0);
+	before_shmem_exit(replorigin_reset, UndefinedDatum);
 
 	/* Connect to the origin and start the replication. */
 	elog(DEBUG1, "connecting to publisher using connection string \"%s\"",
@@ -5556,7 +5556,7 @@ SetupApplyOrSyncWorker(int worker_slot)
 	 */
 	CacheRegisterSyscacheCallback(SUBSCRIPTIONRELMAP,
 								  invalidate_syncing_table_states,
-								  (Datum) 0);
+								  UndefinedDatum);
 }
 
 /* Logical Replication Apply worker entry point */

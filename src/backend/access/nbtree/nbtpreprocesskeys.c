@@ -1944,7 +1944,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan, int *new_numberOfKeys)
 								   InvalidOid,	/* opclass input subtype */
 								   collation,	/* index column's collation */
 								   cmp_proc,	/* equality operator's proc */
-								   (Datum) 0);	/* constant */
+								   UndefinedDatum);	/* constant */
 
 			/* Initialize generic BTArrayKeyInfo fields */
 			so->arrayKeys[numArrayKeys].scan_key = numArrayKeyData;

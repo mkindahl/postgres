@@ -448,7 +448,7 @@ expand_insert_targetlist(PlannerInfo *root, List *tlist, Relation rel)
 											  -1,
 											  InvalidOid,
 											  sizeof(int32),
-											  (Datum) 0,
+											  UndefinedDatum,
 											  true, /* isnull */
 											  true /* byval */ );
 			}
@@ -463,7 +463,7 @@ expand_insert_targetlist(PlannerInfo *root, List *tlist, Relation rel)
 											  baseTypeMod,
 											  att_tup->attcollation,
 											  att_tup->attlen,
-											  (Datum) 0,
+											  UndefinedDatum,
 											  true, /* isnull */
 											  att_tup->attbyval);
 			}

@@ -799,7 +799,7 @@ brin_range_deserialize(int maxvalues, SerializedRanges *serialized)
 	{
 		if (typbyval)			/* simple by-value data types */
 		{
-			Datum		v = 0;
+			Datum v = UndefinedDatum;
 
 			memcpy(&v, ptr, typlen);
 

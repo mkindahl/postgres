@@ -3656,7 +3656,7 @@ text_to_table(PG_FUNCTION_ARGS)
 
 	(void) split_text(fcinfo, &tstate);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

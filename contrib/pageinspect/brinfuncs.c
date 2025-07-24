@@ -336,7 +336,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 	brin_free_desc(bdesc);
 	index_close(indexRel, AccessShareLock);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 Datum

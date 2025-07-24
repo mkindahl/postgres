@@ -84,7 +84,7 @@ superuser_arg(Oid roleid)
 	{
 		CacheRegisterSyscacheCallback(AUTHOID,
 									  RoleidCallback,
-									  (Datum) 0);
+									  UndefinedDatum);
 		roleid_callback_registered = true;
 	}
 

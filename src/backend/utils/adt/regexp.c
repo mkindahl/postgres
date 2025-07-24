@@ -1662,7 +1662,7 @@ build_regexp_match_result(regexp_matches_ctx *matchctx)
 
 		if (so < 0 || eo < 0)
 		{
-			elems[i] = (Datum) 0;
+			elems[i] = UndefinedDatum;
 			nulls[i] = true;
 		}
 		else if (buf)

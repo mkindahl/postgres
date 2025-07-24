@@ -570,7 +570,7 @@ pgss_shmem_startup(void)
 	 * exit hook to dump the statistics to disk.
 	 */
 	if (!IsUnderPostmaster)
-		on_shmem_exit(pgss_shmem_shutdown, (Datum) 0);
+		on_shmem_exit(pgss_shmem_shutdown, UndefinedDatum);
 
 	/*
 	 * Done if some other process already completed our initialization.
@@ -1608,7 +1608,7 @@ pg_stat_statements_1_12(PG_FUNCTION_ARGS)
 
 	pg_stat_statements_internal(fcinfo, PGSS_V1_12, showtext);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 Datum
@@ -1618,7 +1618,7 @@ pg_stat_statements_1_11(PG_FUNCTION_ARGS)
 
 	pg_stat_statements_internal(fcinfo, PGSS_V1_11, showtext);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 Datum
@@ -1628,7 +1628,7 @@ pg_stat_statements_1_10(PG_FUNCTION_ARGS)
 
 	pg_stat_statements_internal(fcinfo, PGSS_V1_10, showtext);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 Datum
@@ -1638,7 +1638,7 @@ pg_stat_statements_1_9(PG_FUNCTION_ARGS)
 
 	pg_stat_statements_internal(fcinfo, PGSS_V1_9, showtext);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 Datum
@@ -1648,7 +1648,7 @@ pg_stat_statements_1_8(PG_FUNCTION_ARGS)
 
 	pg_stat_statements_internal(fcinfo, PGSS_V1_8, showtext);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 Datum
@@ -1658,7 +1658,7 @@ pg_stat_statements_1_3(PG_FUNCTION_ARGS)
 
 	pg_stat_statements_internal(fcinfo, PGSS_V1_3, showtext);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 Datum
@@ -1668,7 +1668,7 @@ pg_stat_statements_1_2(PG_FUNCTION_ARGS)
 
 	pg_stat_statements_internal(fcinfo, PGSS_V1_2, showtext);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -1681,7 +1681,7 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 	/* If it's really API 1.1, we'll figure that out below */
 	pg_stat_statements_internal(fcinfo, PGSS_V1_0, true);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /* Common code for all versions of pg_stat_statements() */

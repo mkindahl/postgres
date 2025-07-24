@@ -1462,7 +1462,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			int16		opt = indoption->values[keyno];
 			Oid			indcoll = indcollation->values[keyno];
 			Datum		attoptions = get_attoptions(indexrelid, keyno + 1);
-			bool		has_options = attoptions != (Datum) 0;
+			bool		has_options = attoptions != UndefinedDatum;
 
 			/* Add collation, if not default for column */
 			if (OidIsValid(indcoll) && indcoll != keycolcollation)

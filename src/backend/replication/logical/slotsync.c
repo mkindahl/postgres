@@ -1422,7 +1422,7 @@ ReplSlotSyncWorkerMain(const void *startup_data, size_t startup_data_len)
 	ereport(LOG, errmsg("slot sync worker started"));
 
 	/* Register it as soon as SlotSyncCtx->pid is initialized. */
-	before_shmem_exit(slotsync_worker_onexit, (Datum) 0);
+	before_shmem_exit(slotsync_worker_onexit, UndefinedDatum);
 
 	/*
 	 * Establishes SIGALRM handler and initialize timeout module. It is needed

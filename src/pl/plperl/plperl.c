@@ -1853,7 +1853,7 @@ PG_FUNCTION_INFO_V1(plperl_call_handler);
 Datum
 plperl_call_handler(PG_FUNCTION_ARGS)
 {
-	Datum		retval = (Datum) 0;
+	Datum		retval = UndefinedDatum;
 	plperl_call_data *volatile save_call_data = current_call_data;
 	plperl_interp_desc *volatile oldinterp = plperl_active_interp;
 	plperl_call_data this_call_data;
@@ -1870,7 +1870,7 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
 		{
 			plperl_event_trigger_handler(fcinfo);
-			retval = (Datum) 0;
+			retval = UndefinedDatum;
 		}
 		else
 			retval = plperl_func_handler(fcinfo);
@@ -2405,7 +2405,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	bool		nonatomic;
 	plperl_proc_desc *prodesc;
 	SV		   *perlret;
-	Datum		retval = 0;
+	Datum retval = UndefinedDatum;
 	ReturnSetInfo *rsi;
 	ErrorContextCallback pl_error_context;
 
@@ -2492,7 +2492,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			rsi->setResult = current_call_data->tuple_store;
 			rsi->setDesc = current_call_data->ret_tdesc;
 		}
-		retval = (Datum) 0;
+		retval = UndefinedDatum;
 	}
 	else if (prodesc->result_oid)
 	{
@@ -2577,7 +2577,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		else if (TRIGGER_FIRED_BY_TRUNCATE(trigdata->tg_event))
 			retval = PointerGetDatum(trigdata->tg_trigtuple);
 		else
-			retval = (Datum) 0; /* can this happen? */
+			retval = UndefinedDatum; /* can this happen? */
 	}
 	else
 	{

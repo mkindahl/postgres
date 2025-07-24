@@ -883,5 +883,5 @@ xpath_table(PG_FUNCTION_ARGS)
 	 * to build our tuples with, so the caller can verify we did what it was
 	 * expecting.
 	 */
-	return (Datum) 0;
+	return UndefinedDatum;
 }

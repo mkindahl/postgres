@@ -653,7 +653,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	{
 		dblink_res_error(conn, conname, res, fail,
 						 "while fetching from cursor \"%s\"", curname);
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 	else if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
@@ -665,7 +665,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	}
 
 	materializeResult(fcinfo, conn, res);
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -821,7 +821,7 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 	}
 	PG_END_TRY();
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -1915,7 +1915,7 @@ dblink_get_notify(PG_FUNCTION_ARGS)
 		PQconsumeInput(conn);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

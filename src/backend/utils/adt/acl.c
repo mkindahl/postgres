@@ -628,7 +628,7 @@ aclitemin(PG_FUNCTION_ARGS)
 	while (isspace((unsigned char) *s))
 		++s;
 	if (*s)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("extra garbage at the end of the ACL specification")));
 
@@ -5053,13 +5053,13 @@ initialize_acl(void)
 		 */
 		CacheRegisterSyscacheCallback(AUTHMEMROLEMEM,
 									  RoleMembershipCacheCallback,
-									  (Datum) 0);
+									  UndefinedDatum);
 		CacheRegisterSyscacheCallback(AUTHOID,
 									  RoleMembershipCacheCallback,
-									  (Datum) 0);
+									  UndefinedDatum);
 		CacheRegisterSyscacheCallback(DATABASEOID,
 									  RoleMembershipCacheCallback,
-									  (Datum) 0);
+									  UndefinedDatum);
 	}
 }
 

@@ -827,7 +827,8 @@ json_agg_transfn_worker(FunctionCallInfo fcinfo, bool absent_on_null)
 	/* fast path for NULLs */
 	if (PG_ARGISNULL(1))
 	{
-		datum_to_json_internal((Datum) 0, true, state->str, JSONTYPE_NULL,
+		datum_to_json_internal(UndefinedDatum, true, state->str,
+							   JSONTYPE_NULL,
 							   InvalidOid, false);
 		PG_RETURN_POINTER(state);
 	}
@@ -1132,7 +1133,7 @@ json_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 	appendStringInfoString(state->str, " : ");
 
 	if (PG_ARGISNULL(2))
-		arg = (Datum) 0;
+		arg = UndefinedDatum;
 	else
 		arg = PG_GETARG_DATUM(2);
 

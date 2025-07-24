@@ -5388,5 +5388,5 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 	}
 
 	pg_tzenumerate_end(tzenum);
-	return (Datum) 0;
+	return UndefinedDatum;
 }

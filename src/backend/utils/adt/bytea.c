@@ -239,7 +239,7 @@ byteain(PG_FUNCTION_ARGS)
 			/*
 			 * one backslash, not followed by another or ### valid octal
 			 */
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s", "bytea")));
 		}

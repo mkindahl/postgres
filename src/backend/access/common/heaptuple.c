@@ -759,7 +759,7 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 			break;
 		default:
 			elog(ERROR, "invalid attnum: %d", attnum);
-			result = 0;			/* keep compiler quiet */
+			result = UndefinedDatum;			/* keep compiler quiet */
 			break;
 	}
 	return result;
@@ -1041,7 +1041,7 @@ expand_tuple(HeapTuple *targetHeapTuple,
 					 &bitMask,
 					 &targetData,
 					 infoMask,
-					 (Datum) 0,
+					 UndefinedDatum,
 					 true);
 		}
 	}							/* end loop over missing attributes */
@@ -1375,7 +1375,7 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 
 		if (hasnulls && att_isnull(attnum, bp))
 		{
-			values[attnum] = (Datum) 0;
+			values[attnum] = UndefinedDatum;
 			isnull[attnum] = true;
 			slow = true;		/* can't use attcacheoff anymore */
 			continue;

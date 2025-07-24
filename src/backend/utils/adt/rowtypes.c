@@ -100,7 +100,7 @@ record_in(PG_FUNCTION_ARGS)
 	 * supply a valid typmod, and then we can do something useful for RECORD.
 	 */
 	if (tupType == RECORDOID && tupTypmod < 0)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("input of anonymous composite types is not implemented")));
 
@@ -172,7 +172,7 @@ record_in(PG_FUNCTION_ARGS)
 		/* Ignore dropped columns in datatype, but fill with nulls */
 		if (att->attisdropped)
 		{
-			values[i] = (Datum) 0;
+			values[i] = UndefinedDatum;
 			nulls[i] = true;
 			continue;
 		}
@@ -572,7 +572,7 @@ record_recv(PG_FUNCTION_ARGS)
 		/* Ignore dropped columns in datatype, but fill with nulls */
 		if (att->attisdropped)
 		{
-			values[i] = (Datum) 0;
+			values[i] = UndefinedDatum;
 			nulls[i] = true;
 			continue;
 		}

@@ -593,7 +593,7 @@ crosstab(PG_FUNCTION_ARGS)
 	/* release SPI related resources (and return to caller's context) */
 	SPI_finish();
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -695,7 +695,7 @@ crosstab_hash(PG_FUNCTION_ARGS)
 	rsinfo->setDesc = tupdesc;
 	MemoryContextSwitchTo(oldcontext);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -1047,7 +1047,7 @@ connectby_text(PG_FUNCTION_ARGS)
 	 * to build our tuples with, so the caller can verify we did what it was
 	 * expecting.
 	 */
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 PG_FUNCTION_INFO_V1(connectby_text_serial);
@@ -1126,7 +1126,7 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 	 * to build our tuples with, so the caller can verify we did what it was
 	 * expecting.
 	 */
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 

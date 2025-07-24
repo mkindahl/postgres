@@ -96,11 +96,11 @@ regprocin(PG_FUNCTION_ARGS)
 	clist = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);
 
 	if (clist == NULL)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
 	else if (clist->next != NULL)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 				 errmsg("more than one function named \"%s\"",
 						pro_name_or_oid)));
@@ -261,7 +261,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	}
 
 	if (clist == NULL)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
 
@@ -505,11 +505,11 @@ regoperin(PG_FUNCTION_ARGS)
 	clist = OpernameGetCandidates(names, '\0', true);
 
 	if (clist == NULL)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s", opr_name_or_oid)));
 	else if (clist->next != NULL)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 				 errmsg("more than one operator named %s",
 						opr_name_or_oid)));
@@ -666,12 +666,12 @@ regoperatorin(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (nargs == 1)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_PARAMETER),
 				 errmsg("missing argument"),
 				 errhint("Use NONE to denote the missing argument of a unary operator.")));
 	if (nargs != 2)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("too many arguments"),
 				 errhint("Provide two argument types for operator.")));
@@ -679,7 +679,7 @@ regoperatorin(PG_FUNCTION_ARGS)
 	result = OpernameGetOprid(names, argtypes[0], argtypes[1]);
 
 	if (!OidIsValid(result))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s", opr_name_or_oid)));
 
@@ -909,7 +909,7 @@ regclassin(PG_FUNCTION_ARGS)
 	result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, true);
 
 	if (!OidIsValid(result))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 				 errmsg("relation \"%s\" does not exist",
 						NameListToString(names))));
@@ -1052,7 +1052,7 @@ regcollationin(PG_FUNCTION_ARGS)
 	result = get_collation_oid(names, true);
 
 	if (!OidIsValid(result))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("collation \"%s\" for encoding \"%s\" does not exist",
 						NameListToString(names), GetDatabaseEncodingName())));
@@ -1345,7 +1345,7 @@ regconfigin(PG_FUNCTION_ARGS)
 	result = get_ts_config_oid(names, true);
 
 	if (!OidIsValid(result))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("text search configuration \"%s\" does not exist",
 						NameListToString(names))));
@@ -1455,7 +1455,7 @@ regdictionaryin(PG_FUNCTION_ARGS)
 	result = get_ts_dict_oid(names, true);
 
 	if (!OidIsValid(result))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("text search dictionary \"%s\" does not exist",
 						NameListToString(names))));
@@ -1560,14 +1560,14 @@ regrolein(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (list_length(names) != 1)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax")));
 
 	result = get_role_oid(strVal(linitial(names)), true);
 
 	if (!OidIsValid(result))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("role \"%s\" does not exist",
 						strVal(linitial(names)))));
@@ -1677,14 +1677,14 @@ regnamespacein(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (list_length(names) != 1)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax")));
 
 	result = get_namespace_oid(strVal(linitial(names)), true);
 
 	if (!OidIsValid(result))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema \"%s\" does not exist",
 						strVal(linitial(names)))));
@@ -1794,14 +1794,14 @@ regdatabasein(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (list_length(names) != 1)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax")));
 
 	result = get_database_oid(strVal(linitial(names)), true);
 
 	if (!OidIsValid(result))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("database \"%s\" does not exist",
 						strVal(linitial(names)))));

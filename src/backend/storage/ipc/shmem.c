@@ -571,7 +571,7 @@ pg_get_shmem_allocations(PG_FUNCTION_ARGS)
 
 	LWLockRelease(ShmemIndexLock);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -725,7 +725,7 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 	LWLockRelease(ShmemIndexLock);
 	firstNumaTouch = false;
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

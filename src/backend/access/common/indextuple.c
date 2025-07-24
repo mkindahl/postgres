@@ -494,7 +494,7 @@ index_deform_tuple_internal(TupleDesc tupleDescriptor,
 
 		if (hasnulls && att_isnull(attnum, bp))
 		{
-			values[attnum] = (Datum) 0;
+			values[attnum] = UndefinedDatum;
 			isnull[attnum] = true;
 			slow = true;		/* can't use attcacheoff anymore */
 			continue;

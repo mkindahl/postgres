@@ -467,7 +467,7 @@ ExecScanSubPlan(SubPlanState *node,
 		if (subLinkType == EXPR_SUBLINK ||
 			subLinkType == ROWCOMPARE_SUBLINK)
 		{
-			result = (Datum) 0;
+			result = UndefinedDatum;
 			*isNull = true;
 		}
 		else if (subLinkType == MULTIEXPR_SUBLINK)
@@ -480,7 +480,7 @@ ExecScanSubPlan(SubPlanState *node,
 
 				prmdata = &(econtext->ecxt_param_exec_vals[paramid]);
 				Assert(prmdata->execPlan == NULL);
-				prmdata->value = (Datum) 0;
+				prmdata->value = UndefinedDatum;
 				prmdata->isnull = true;
 			}
 		}
@@ -1249,7 +1249,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 				ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 				prm->execPlan = NULL;
-				prm->value = (Datum) 0;
+				prm->value = UndefinedDatum;
 				prm->isnull = true;
 			}
 		}

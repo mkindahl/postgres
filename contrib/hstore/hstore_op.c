@@ -604,7 +604,7 @@ hstore_slice_to_array(PG_FUNCTION_ARGS)
 		if (idx < 0 || HSTORE_VALISNULL(entries, idx))
 		{
 			out_nulls[i] = true;
-			out_datums[i] = (Datum) 0;
+			out_datums[i] = UndefinedDatum;
 		}
 		else
 		{
@@ -748,7 +748,7 @@ hstore_avals(PG_FUNCTION_ARGS)
 	{
 		if (HSTORE_VALISNULL(entries, i))
 		{
-			d[i] = (Datum) 0;
+			d[i] = UndefinedDatum;
 			nulls[i] = true;
 		}
 		else
@@ -799,7 +799,7 @@ hstore_to_array_internal(HStore *hs, int ndims)
 
 		if (HSTORE_VALISNULL(entries, i))
 		{
-			out_datums[i * 2 + 1] = (Datum) 0;
+			out_datums[i * 2 + 1] = UndefinedDatum;
 			out_nulls[i * 2 + 1] = true;
 		}
 		else
@@ -1051,7 +1051,7 @@ hstore_each(PG_FUNCTION_ARGS)
 
 		if (HSTORE_VALISNULL(entries, i))
 		{
-			dvalues[1] = (Datum) 0;
+			dvalues[1] = UndefinedDatum;
 			nulls[1] = true;
 		}
 		else

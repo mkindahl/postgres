@@ -1188,7 +1188,7 @@ statext_mcv_deserialize(bytea *data)
 			/* for by-val types we simply copy data into the mapping */
 			for (i = 0; i < info[dim].nvalues; i++)
 			{
-				Datum		v = 0;
+				Datum v = UndefinedDatum;
 
 				memcpy(&v, ptr, info[dim].typlen);
 				ptr += info[dim].typlen;
@@ -1433,7 +1433,7 @@ pg_stats_ext_mcvlist_items(PG_FUNCTION_ARGS)
 			}
 			else
 				astate_values = accumArrayResult(astate_values,
-												 (Datum) 0,
+												 UndefinedDatum,
 												 true,
 												 TEXTOID,
 												 CurrentMemoryContext);

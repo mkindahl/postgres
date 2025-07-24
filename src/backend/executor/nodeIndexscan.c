@@ -479,7 +479,7 @@ reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
 										   node->iss_OrderByTypByVals[i],
 										   node->iss_OrderByTypLens[i]);
 		else
-			rt->orderbyvals[i] = (Datum) 0;
+			rt->orderbyvals[i] = UndefinedDatum;
 		rt->orderbynulls[i] = orderbynulls[i];
 	}
 	pairingheap_add(node->iss_ReorderQueue, &rt->ph_node);
@@ -1293,7 +1293,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				runtime_keys[n_runtime_keys].key_toastable =
 					TypeIsToastable(op_righttype);
 				n_runtime_keys++;
-				scanvalue = (Datum) 0;
+				scanvalue = UndefinedDatum;
 			}
 
 			/*
@@ -1417,7 +1417,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 					runtime_keys[n_runtime_keys].key_toastable =
 						TypeIsToastable(op_righttype);
 					n_runtime_keys++;
-					scanvalue = (Datum) 0;
+					scanvalue = UndefinedDatum;
 				}
 
 				/*
@@ -1541,7 +1541,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 					 */
 					runtime_keys[n_runtime_keys].key_toastable = true;
 					n_runtime_keys++;
-					scanvalue = (Datum) 0;
+					scanvalue = UndefinedDatum;
 				}
 			}
 			else
@@ -1552,7 +1552,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 					ExecInitExpr(rightop, planstate);
 				/* the remaining fields were zeroed by palloc0 */
 				n_array_keys++;
-				scanvalue = (Datum) 0;
+				scanvalue = UndefinedDatum;
 			}
 
 			/*
@@ -1616,7 +1616,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 								   InvalidOid,	/* no strategy subtype */
 								   InvalidOid,	/* no collation */
 								   InvalidOid,	/* no reg proc for this */
-								   (Datum) 0);	/* constant */
+								   UndefinedDatum);	/* constant */
 		}
 		else
 			elog(ERROR, "unsupported indexqual type: %d",

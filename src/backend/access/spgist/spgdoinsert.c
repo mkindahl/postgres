@@ -755,7 +755,7 @@ doPickSplit(Relation index, SpGistState *state,
 			if (it->tupstate == SPGIST_LIVE)
 			{
 				in.datums[nToInsert] =
-					isNulls ? (Datum) 0 : SGLTDATUM(it, state);
+					isNulls ? UndefinedDatum : SGLTDATUM(it, state);
 				oldLeafs[nToInsert] = it;
 				nToInsert++;
 				toDelete[nToDelete] = i;
@@ -781,7 +781,7 @@ doPickSplit(Relation index, SpGistState *state,
 			if (it->tupstate == SPGIST_LIVE)
 			{
 				in.datums[nToInsert] =
-					isNulls ? (Datum) 0 : SGLTDATUM(it, state);
+					isNulls ? UndefinedDatum : SGLTDATUM(it, state);
 				oldLeafs[nToInsert] = it;
 				nToInsert++;
 				toDelete[nToDelete] = i;
@@ -814,7 +814,7 @@ doPickSplit(Relation index, SpGistState *state,
 	 * for the picksplit function.  So don't increment nToInsert yet.
 	 */
 	in.datums[in.nTuples] =
-		isNulls ? (Datum) 0 : SGLTDATUM(newLeafTuple, state);
+		isNulls ? UndefinedDatum : SGLTDATUM(newLeafTuple, state);
 	oldLeafs[in.nTuples] = newLeafTuple;
 	in.nTuples++;
 
@@ -880,7 +880,7 @@ doPickSplit(Relation index, SpGistState *state,
 			/*
 			 * Nulls tree can contain only null key values.
 			 */
-			leafDatums[spgKeyColumn] = (Datum) 0;
+			leafDatums[spgKeyColumn] = UndefinedDatum;
 			leafIsnulls[spgKeyColumn] = true;
 
 			newLeafs[i] = spgFormLeafTuple(state, &oldLeafs[i]->heapPtr,
@@ -926,7 +926,7 @@ doPickSplit(Relation index, SpGistState *state,
 	 */
 	for (i = 0; i < out.nNodes; i++)
 	{
-		Datum		label = (Datum) 0;
+		Datum		label = UndefinedDatum;
 		bool		labelisnull = (out.nodeLabels == NULL);
 
 		if (!labelisnull)
@@ -1749,7 +1749,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 
 	for (i = 0; i < out->result.splitTuple.prefixNNodes; i++)
 	{
-		Datum		label = (Datum) 0;
+		Datum		label = UndefinedDatum;
 		bool		labelisnull;
 
 		labelisnull = (out->result.splitTuple.prefixNodeLabels == NULL);
@@ -1967,7 +1967,7 @@ spgdoinsert(Relation index, SpGistState *state,
 		}
 	}
 	else
-		leafDatums[spgKeyColumn] = (Datum) 0;
+		leafDatums[spgKeyColumn] = UndefinedDatum;
 
 	/* Likewise, ensure that any INCLUDE values are not toasted */
 	for (int i = spgFirstIncludeColumn; i < leafDescriptor->natts; i++)
@@ -1980,7 +1980,7 @@ spgdoinsert(Relation index, SpGistState *state,
 				leafDatums[i] = datums[i];
 		}
 		else
-			leafDatums[i] = (Datum) 0;
+			leafDatums[i] = UndefinedDatum;
 	}
 
 	/*

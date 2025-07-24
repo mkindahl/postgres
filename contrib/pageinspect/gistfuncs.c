@@ -187,7 +187,7 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 Datum
@@ -353,7 +353,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			values[4] = (Datum) 0;
+			values[4] = UndefinedDatum;
 			nulls[4] = true;
 		}
 
@@ -362,5 +362,5 @@ gist_page_items(PG_FUNCTION_ARGS)
 
 	relation_close(indexRel, AccessShareLock);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }

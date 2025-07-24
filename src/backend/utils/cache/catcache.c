@@ -386,10 +386,10 @@ CatalogCacheComputeHashValue(CatCache *cache, int nkeys,
 static uint32
 CatalogCacheComputeTupleHashValue(CatCache *cache, int nkeys, HeapTuple tuple)
 {
-	Datum		v1 = 0,
-				v2 = 0,
-				v3 = 0,
-				v4 = 0;
+	Datum		v1 = UndefinedDatum,
+				v2 = UndefinedDatum,
+				v3 = UndefinedDatum,
+				v4 = UndefinedDatum;
 	bool		isNull = false;
 	int		   *cc_keyno = cache->cc_keyno;
 	TupleDesc	cc_tupdesc = cache->cc_tupdesc;
@@ -1723,7 +1723,7 @@ SearchCatCacheList(CatCache *cache,
 				   Datum v2,
 				   Datum v3)
 {
-	Datum		v4 = 0;			/* dummy last-column value */
+	Datum v4 = UndefinedDatum;			/* dummy last-column value */
 	Datum		arguments[CATCACHE_MAXKEYS];
 	uint32		lHashValue;
 	Index		lHashIndex;

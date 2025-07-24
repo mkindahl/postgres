@@ -1172,7 +1172,7 @@ ProcessUtilitySlow(ParseState *pstate,
 							 * parse and validate reloptions for the toast
 							 * table
 							 */
-							toast_options = transformRelOptions((Datum) 0,
+							toast_options = transformRelOptions(UndefinedDatum,
 																cstmt->options,
 																"toast",
 																validnsps,

@@ -848,14 +848,14 @@ process_ordered_aggregate_single(AggState *aggstate,
 								 AggStatePerTrans pertrans,
 								 AggStatePerGroup pergroupstate)
 {
-	Datum		oldVal = (Datum) 0;
+	Datum		oldVal = UndefinedDatum;
 	bool		oldIsNull = true;
 	bool		haveOldVal = false;
 	MemoryContext workcontext = aggstate->tmpcontext->ecxt_per_tuple_memory;
 	MemoryContext oldContext;
 	bool		isDistinct = (pertrans->numDistinctCols > 0);
-	Datum		newAbbrevVal = (Datum) 0;
-	Datum		oldAbbrevVal = (Datum) 0;
+	Datum		newAbbrevVal = UndefinedDatum;
+	Datum		oldAbbrevVal = UndefinedDatum;
 	FunctionCallInfo fcinfo = pertrans->transfn_fcinfo;
 	Datum	   *newVal;
 	bool	   *isNull;
@@ -955,8 +955,8 @@ process_ordered_aggregate_multi(AggState *aggstate,
 	TupleTableSlot *slot2 = pertrans->uniqslot;
 	int			numTransInputs = pertrans->numTransInputs;
 	int			numDistinctCols = pertrans->numDistinctCols;
-	Datum		newAbbrevVal = (Datum) 0;
-	Datum		oldAbbrevVal = (Datum) 0;
+	Datum		newAbbrevVal = UndefinedDatum;
+	Datum		oldAbbrevVal = UndefinedDatum;
 	bool		haveOldValue = false;
 	TupleTableSlot *save = aggstate->tmpcontext->ecxt_outertuple;
 	int			i;
@@ -1100,7 +1100,7 @@ finalize_aggregate(AggState *aggstate,
 		/* Fill any remaining argument positions with nulls */
 		for (; i < numFinalArgs; i++)
 		{
-			fcinfo->args[i].value = (Datum) 0;
+			fcinfo->args[i].value = UndefinedDatum;
 			fcinfo->args[i].isnull = true;
 			anynull = true;
 		}
@@ -1108,7 +1108,7 @@ finalize_aggregate(AggState *aggstate,
 		if (fcinfo->flinfo->fn_strict && anynull)
 		{
 			/* don't call a strict function with NULL inputs */
-			*resultVal = (Datum) 0;
+			*resultVal = UndefinedDatum;
 			*resultIsNull = true;
 		}
 		else
@@ -1161,7 +1161,7 @@ finalize_partialaggregate(AggState *aggstate,
 		/* Don't call a strict serialization function with NULL input. */
 		if (pertrans->serialfn.fn_strict && pergroupstate->transValueIsNull)
 		{
-			*resultVal = (Datum) 0;
+			*resultVal = UndefinedDatum;
 			*resultIsNull = true;
 		}
 		else
@@ -1334,7 +1334,7 @@ finalize_aggregates(AggState *aggstate,
 					pfree(DatumGetPointer(pertrans->lastdatum));
 
 				pertrans->lastisnull = false;
-				pertrans->lastdatum = (Datum) 0;
+				pertrans->lastdatum = UndefinedDatum;
 			}
 			else
 				ExecClearTuple(pertrans->uniqslot);
@@ -3970,7 +3970,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 										  Anum_pg_aggregate_agginitval,
 										  &initValueIsNull);
 			if (initValueIsNull)
-				initValue = (Datum) 0;
+				initValue = UndefinedDatum;
 			else
 				initValue = GetAggInitVal(textInitVal, aggtranstype);
 

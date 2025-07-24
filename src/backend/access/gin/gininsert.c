@@ -1436,7 +1436,7 @@ GinBufferStoreTuple(GinBuffer *buffer, GinTuple *tup)
 		if (tup->category == GIN_CAT_NORM_KEY)
 			buffer->key = datumCopy(key, buffer->typbyval, buffer->typlen);
 		else
-			buffer->key = (Datum) 0;
+			buffer->key = UndefinedDatum;
 	}
 
 	/*
@@ -1534,7 +1534,7 @@ GinBufferReset(GinBuffer *buffer)
 	 * Not required, but makes it more likely to trigger NULL dereference if
 	 * using the value incorrectly, etc.
 	 */
-	buffer->key = (Datum) 0;
+	buffer->key = UndefinedDatum;
 
 	buffer->attnum = 0;
 	buffer->category = 0;
@@ -2354,7 +2354,7 @@ _gin_parse_tuple_key(GinTuple *a)
 	Datum		key;
 
 	if (a->category != GIN_CAT_NORM_KEY)
-		return (Datum) 0;
+		return UndefinedDatum;
 
 	if (a->typbyval)
 	{

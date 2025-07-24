@@ -146,7 +146,7 @@ tts_virtual_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("cannot retrieve a system column in this context")));
 
-	return 0;					/* silence compiler warnings */
+	return UndefinedDatum;					/* silence compiler warnings */
 }
 
 /*
@@ -563,7 +563,7 @@ tts_minimal_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("cannot retrieve a system column in this context")));
 
-	return 0;					/* silence compiler warnings */
+	return UndefinedDatum;					/* silence compiler warnings */
 }
 
 /*
@@ -1036,7 +1036,7 @@ slot_deform_heap_tuple_internal(TupleTableSlot *slot, HeapTuple tuple,
 
 		if (hasnulls && att_isnull(attnum, bp))
 		{
-			values[attnum] = (Datum) 0;
+			values[attnum] = UndefinedDatum;
 			isnull[attnum] = true;
 			if (!slow)
 			{
@@ -2354,7 +2354,7 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 		else
 		{
 			/* Handle dropped attributes by setting to NULL */
-			dvalues[i] = (Datum) 0;
+			dvalues[i] = UndefinedDatum;
 			nulls[i] = true;
 		}
 	}

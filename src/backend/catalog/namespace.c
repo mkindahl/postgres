@@ -4765,22 +4765,22 @@ InitializeSearchPath(void)
 		/* namespace name or ACLs may have changed */
 		CacheRegisterSyscacheCallback(NAMESPACEOID,
 									  InvalidationCallback,
-									  (Datum) 0);
+									  UndefinedDatum);
 
 		/* role name may affect the meaning of "$user" */
 		CacheRegisterSyscacheCallback(AUTHOID,
 									  InvalidationCallback,
-									  (Datum) 0);
+									  UndefinedDatum);
 
 		/* role membership may affect ACLs */
 		CacheRegisterSyscacheCallback(AUTHMEMROLEMEM,
 									  InvalidationCallback,
-									  (Datum) 0);
+									  UndefinedDatum);
 
 		/* database owner may affect ACLs */
 		CacheRegisterSyscacheCallback(DATABASEOID,
 									  InvalidationCallback,
-									  (Datum) 0);
+									  UndefinedDatum);
 
 		/* Force search path to be recomputed on next use */
 		baseSearchPathValid = false;

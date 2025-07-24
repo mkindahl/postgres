@@ -341,7 +341,7 @@ TypeCreate(Oid newTypeOid,
 	{
 		nulls[i] = false;
 		replaces[i] = true;
-		values[i] = (Datum) 0;
+		values[i] = UndefinedDatum;
 	}
 
 	/*

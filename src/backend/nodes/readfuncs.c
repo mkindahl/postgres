@@ -621,7 +621,7 @@ readDatum(bool typbyval)
 	{
 		if (length > (Size) sizeof(Datum))
 			elog(ERROR, "byval datum but length = %zu", length);
-		res = (Datum) 0;
+		res = UndefinedDatum;
 		s = (char *) (&res);
 		for (i = 0; i < (Size) sizeof(Datum); i++)
 		{

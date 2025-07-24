@@ -675,7 +675,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 			rsi->setDesc = CreateTupleDescCopy(estate.tuple_store_desc);
 			MemoryContextSwitchTo(oldcxt);
 		}
-		estate.retval = (Datum) 0;
+		estate.retval = UndefinedDatum;
 		fcinfo->isnull = true;
 	}
 	else if (!estate.retisnull)
@@ -1016,7 +1016,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 				if (TupleDescAttr(tupdesc, i)->attgenerated == ATTRIBUTE_GENERATED_STORED)
 					expanded_record_set_field_internal(rec_new->erh,
 													   i + 1,
-													   (Datum) 0,
+													   UndefinedDatum,
 													   true,	/* isnull */
 													   false, false);
 		}
@@ -1512,7 +1512,8 @@ plpgsql_fulfill_promise(PLpgSQL_execstate *estate,
 			}
 			else
 			{
-				assign_simple_var(estate, var, (Datum) 0, true, false);
+				assign_simple_var(estate, var, UndefinedDatum,
+						  true, false);
 			}
 			break;
 
@@ -1697,7 +1698,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					 * Free any old value, in case re-entering block, and
 					 * initialize to NULL
 					 */
-					assign_simple_var(estate, var, (Datum) 0, true, false);
+					assign_simple_var(estate, var,
+							  UndefinedDatum,
+							  true, false);
 
 					if (var->default_val == NULL)
 					{
@@ -1710,7 +1713,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 						if (var->datatype->typtype == TYPTYPE_DOMAIN)
 							exec_assign_value(estate,
 											  (PLpgSQL_datum *) var,
-											  (Datum) 0,
+											  UndefinedDatum,
 											  true,
 											  UNKNOWNOID,
 											  -1);
@@ -2611,7 +2614,8 @@ exec_stmt_case(PLpgSQL_execstate *estate, PLpgSQL_stmt_case *stmt)
 
 			/* We can now discard any value we had for the temp variable */
 			if (t_var != NULL)
-				assign_simple_var(estate, t_var, (Datum) 0, true, false);
+				assign_simple_var(estate, t_var,
+						  UndefinedDatum, true, false);
 
 			/* Evaluate the statement(s), and we're done */
 			return exec_stmts(estate, cwt->stmts);
@@ -2620,7 +2624,7 @@ exec_stmt_case(PLpgSQL_execstate *estate, PLpgSQL_stmt_case *stmt)
 
 	/* We can now discard any value we had for the temp variable */
 	if (t_var != NULL)
-		assign_simple_var(estate, t_var, (Datum) 0, true, false);
+		assign_simple_var(estate, t_var, UndefinedDatum, true, false);
 
 	/* SQL2003 mandates this error if there was no ELSE clause */
 	if (!stmt->have_else)
@@ -2990,7 +2994,7 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 	SPI_cursor_close(portal);
 
 	if (curname == NULL)
-		assign_simple_var(estate, curvar, (Datum) 0, true, false);
+		assign_simple_var(estate, curvar, UndefinedDatum, true, false);
 
 	return rc;
 }
@@ -3205,7 +3209,7 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 		return PLPGSQL_RC_RETURN;
 
 	/* initialize for null result */
-	estate->retval = (Datum) 0;
+	estate->retval = UndefinedDatum;
 	estate->retisnull = true;
 	estate->rettype = InvalidOid;
 
@@ -3322,7 +3326,7 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 	if (estate->fn_rettype == VOIDOID &&
 		estate->func->fn_prokind != PROKIND_PROCEDURE)
 	{
-		estate->retval = (Datum) 0;
+		estate->retval = UndefinedDatum;
 		estate->retisnull = false;
 		estate->rettype = VOIDOID;
 	}
@@ -4005,7 +4009,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->trigdata = NULL;
 	estate->evtrigdata = NULL;
 
-	estate->retval = (Datum) 0;
+	estate->retval = UndefinedDatum;
 	estate->retisnull = true;
 	estate->rettype = InvalidOid;
 
@@ -5356,7 +5360,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 				if (rec->erh == NULL)
 				{
 					/* Treat uninstantiated record as a simple NULL */
-					*value = (Datum) 0;
+					*value = UndefinedDatum;
 					*isnull = true;
 					/* Report variable's declared type */
 					*typeid = rec->rectypeid;
@@ -5367,7 +5371,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 					if (ExpandedRecordIsEmpty(rec->erh))
 					{
 						/* Empty record is also a NULL */
-						*value = (Datum) 0;
+						*value = UndefinedDatum;
 						*isnull = true;
 					}
 					else
@@ -5682,7 +5686,7 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 			   Oid *rettype,
 			   int32 *rettypmod)
 {
-	Datum		result = 0;
+	Datum result = UndefinedDatum;
 	int			rc;
 	Form_pg_attribute attr;
 
@@ -5735,7 +5739,7 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	if (estate->eval_processed == 0)
 	{
 		*isNull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	/*
@@ -6401,7 +6405,7 @@ plpgsql_param_fetch(ParamListInfo params,
 	/* Return "no such parameter" if not ok */
 	if (!ok)
 	{
-		prm->value = (Datum) 0;
+		prm->value = UndefinedDatum;
 		prm->isnull = true;
 		prm->pflags = 0;
 		prm->ptype = InvalidOid;
@@ -6658,7 +6662,7 @@ plpgsql_param_eval_var_transfer(ExprState *state, ExprEvalStep *op,
 											   get_eval_mcontext(estate));
 		*op->resnull = false;
 
-		var->value = (Datum) 0;
+		var->value = UndefinedDatum;
 		var->isnull = true;
 		var->freeval = false;
 	}
@@ -7293,7 +7297,7 @@ exec_move_row_from_fields(PLpgSQL_execstate *estate,
 				else
 				{
 					/* no source for destination column */
-					value = (Datum) 0;
+					value = UndefinedDatum;
 					isnull = true;
 					valtype = UNKNOWNOID;
 					valtypmod = -1;
@@ -7402,7 +7406,7 @@ exec_move_row_from_fields(PLpgSQL_execstate *estate,
 			else
 			{
 				/* no source for destination column */
-				value = (Datum) 0;
+				value = UndefinedDatum;
 				isnull = true;
 				valtype = UNKNOWNOID;
 				valtypmod = -1;

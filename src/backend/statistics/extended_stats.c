@@ -155,7 +155,7 @@ BuildRelationExtStatistics(Relation onerel, bool inh, double totalrows,
 		MVNDistinct *ndistinct = NULL;
 		MVDependencies *dependencies = NULL;
 		MCVList    *mcv = NULL;
-		Datum		exprstats = (Datum) 0;
+		Datum		exprstats = UndefinedDatum;
 		VacAttrStats **stats;
 		ListCell   *lc2;
 		int			stattarget;
@@ -803,7 +803,7 @@ statext_store(Oid statOid, bool inh,
 		nulls[Anum_pg_statistic_ext_data_stxdmcv - 1] = (data == NULL);
 		values[Anum_pg_statistic_ext_data_stxdmcv - 1] = PointerGetDatum(data);
 	}
-	if (pg_cmp_datum(exprs, (Datum)0) != 0)
+	if (pg_cmp_datum(exprs, UndefinedDatum) != 0)
 	{
 		nulls[Anum_pg_statistic_ext_data_stxdexpr - 1] = false;
 		values[Anum_pg_statistic_ext_data_stxdexpr - 1] = exprs;
@@ -2160,7 +2160,7 @@ compute_expr_stats(Relation onerel, AnlExprData *exprdata, int nexprs,
 											  &isnull);
 			if (isnull)
 			{
-				exprvals[tcnt] = (Datum) 0;
+				exprvals[tcnt] = UndefinedDatum;
 				exprnulls[tcnt] = true;
 			}
 			else
@@ -2299,7 +2299,7 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 		if (!stats->stats_valid)
 		{
 			astate = accumArrayResult(astate,
-									  (Datum) 0,
+									  UndefinedDatum,
 									  true,
 									  typOid,
 									  CurrentMemoryContext);
@@ -2354,7 +2354,7 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 			else
 			{
 				nulls[i] = true;
-				values[i++] = (Datum) 0;
+				values[i++] = UndefinedDatum;
 			}
 		}
 		i = Anum_pg_statistic_stavalues1 - 1;
@@ -2375,7 +2375,7 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 			else
 			{
 				nulls[i] = true;
-				values[i++] = (Datum) 0;
+				values[i++] = UndefinedDatum;
 			}
 		}
 
@@ -2593,7 +2593,7 @@ make_build_data(Relation rel, StatExtEntry *stat, int numrows, HeapTuple *rows,
 								 &isnull);
 			if (isnull)
 			{
-				result->values[idx][i] = (Datum) 0;
+				result->values[idx][i] = UndefinedDatum;
 				result->nulls[idx][i] = true;
 			}
 			else

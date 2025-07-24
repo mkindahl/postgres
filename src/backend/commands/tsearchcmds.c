@@ -1244,7 +1244,7 @@ getTokenTypes(Oid prsId, List *tokennames)
 
 	/* lextype takes one dummy argument */
 	list = (LexDescr *) DatumGetPointer(OidFunctionCall1(prs->lextypeOid,
-														 (Datum) 0));
+														 UndefinedDatum));
 
 	foreach(tn, tokennames)
 	{

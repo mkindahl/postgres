@@ -320,7 +320,7 @@ ProcedureCreate(const char *procedureName,
 	for (i = 0; i < Natts_pg_proc; ++i)
 	{
 		nulls[i] = false;
-		values[i] = (Datum) 0;
+		values[i] = UndefinedDatum;
 		replaces[i] = true;
 	}
 

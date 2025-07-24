@@ -170,7 +170,7 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 			 * If we're continuing to project output rows from a source tuple,
 			 * return NULLs once the SRF has been exhausted.
 			 */
-			*result = (Datum) 0;
+			*result = UndefinedDatum;
 			*isnull = true;
 			hassrf = true;
 		}

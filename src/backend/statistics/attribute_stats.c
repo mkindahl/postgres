@@ -722,7 +722,7 @@ text_to_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid typid,
 		escontext.error_data->elevel = WARNING;
 		ThrowErrorData(escontext.error_data);
 		*ok = false;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	if (array_contains_nulls(DatumGetArrayTypeP(result)))
@@ -731,7 +731,7 @@ text_to_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid typid,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("\"%s\" array cannot contain NULL values", staname)));
 		*ok = false;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*ok = true;
@@ -893,7 +893,7 @@ init_empty_stats_tuple(Oid reloid, int16 attnum, bool inherited,
 	/* initialize stakind, staop, and stacoll slots */
 	for (int slotnum = 0; slotnum < STATISTIC_NUM_SLOTS; slotnum++)
 	{
-		values[Anum_pg_statistic_stakind1 + slotnum - 1] = (Datum) 0;
+		values[Anum_pg_statistic_stakind1 + slotnum - 1] = UndefinedDatum;
 		nulls[Anum_pg_statistic_stakind1 + slotnum - 1] = false;
 		values[Anum_pg_statistic_staop1 + slotnum - 1] = ObjectIdGetDatum(InvalidOid);
 		nulls[Anum_pg_statistic_staop1 + slotnum - 1] = false;

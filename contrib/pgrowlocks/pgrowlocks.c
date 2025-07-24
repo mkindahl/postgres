@@ -275,5 +275,5 @@ pgrowlocks(PG_FUNCTION_ARGS)
 
 	table_endscan(scan);
 	table_close(rel, AccessShareLock);
-	return (Datum) 0;
+	return UndefinedDatum;
 }

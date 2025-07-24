@@ -740,7 +740,7 @@ PGSharedMemoryCreate(Size size,
 		AnonymousShmemSize = size;
 
 		/* Register on-exit routine to unmap the anonymous segment */
-		on_shmem_exit(AnonymousShmemDetach, (Datum) 0);
+		on_shmem_exit(AnonymousShmemDetach, UndefinedDatum);
 
 		/* Now we need only allocate a minimal-sized SysV shmem block. */
 		sysvsize = sizeof(PGShmemHeader);

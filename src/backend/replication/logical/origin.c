@@ -1603,5 +1603,5 @@ pg_show_replication_origin_status(PG_FUNCTION_ARGS)
 
 #undef REPLICATION_ORIGIN_PROGRESS_COLS
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }

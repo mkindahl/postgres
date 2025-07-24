@@ -1160,7 +1160,7 @@ xmlvalidate(PG_FUNCTION_ARGS)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("xmlvalidate is not implemented")));
-	return 0;
+	return UndefinedDatum;
 }
 
 
@@ -4974,7 +4974,7 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 				 Oid typid, int32 typmod, bool *isnull)
 {
 #ifdef USE_LIBXML
-	Datum		result = (Datum) 0;
+	Datum		result = UndefinedDatum;
 	XmlTableBuilderData *xtCxt;
 	volatile xmlXPathObjectPtr xpathobj = NULL;
 

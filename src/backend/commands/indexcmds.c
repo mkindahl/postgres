@@ -370,17 +370,17 @@ CompareOpclassOptions(const Datum *opts1, const Datum *opts2, int natts)
 	fmgr_info(F_ARRAY_EQ, &fm);
 	for (i = 0; i < natts; i++)
 	{
-		Datum		opt1 = opts1 ? opts1[i] : (Datum) 0;
-		Datum		opt2 = opts2 ? opts2[i] : (Datum) 0;
+		Datum		opt1 = opts1 ? opts1[i] : UndefinedDatum;
+		Datum		opt2 = opts2 ? opts2[i] : UndefinedDatum;
 
-		if (opt1 == (Datum) 0)
+		if (opt1 == UndefinedDatum)
 		{
-			if (opt2 == (Datum) 0)
+			if (opt2 == UndefinedDatum)
 				continue;
 			else
 				return false;
 		}
-		else if (opt2 == (Datum) 0)
+		else if (opt2 == UndefinedDatum)
 			return false;
 
 		/*
@@ -908,7 +908,7 @@ DefineIndex(Oid tableId,
 	/*
 	 * Parse AM-specific options, convert to text array form, validate.
 	 */
-	reloptions = transformRelOptions((Datum) 0, stmt->options,
+	reloptions = transformRelOptions(UndefinedDatum, stmt->options,
 									 NULL, NULL, false, false);
 
 	(void) index_reloptions(amoptions, reloptions, true);
@@ -2046,7 +2046,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 						 errmsg("including column does not support NULLS FIRST/LAST options")));
 
 			opclassOids[attn] = InvalidOid;
-			opclassOptions[attn] = (Datum) 0;
+			opclassOptions[attn] = UndefinedDatum;
 			colOptions[attn] = 0;
 			collationOids[attn] = InvalidOid;
 			attn++;
@@ -2240,11 +2240,12 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			Assert(attn < nkeycols);
 
 			opclassOptions[attn] =
-				transformRelOptions((Datum) 0, attribute->opclassopts,
+				transformRelOptions(UndefinedDatum,
+									attribute->opclassopts,
 									NULL, NULL, false, false);
 		}
 		else
-			opclassOptions[attn] = (Datum) 0;
+			opclassOptions[attn] = UndefinedDatum;
 
 		attn++;
 	}

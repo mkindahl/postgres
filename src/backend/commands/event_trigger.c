@@ -1475,7 +1475,7 @@ pg_event_trigger_dropped_objects(PG_FUNCTION_ARGS)
 							 values, nulls);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

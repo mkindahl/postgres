@@ -608,7 +608,7 @@ UpdateIndexRelation(Oid indexoid,
 		pfree(exprsString);
 	}
 	else
-		exprsDatum = (Datum) 0;
+		exprsDatum = UndefinedDatum;
 
 	/*
 	 * Convert the index predicate (if any) to a text datum.  Note we convert
@@ -623,7 +623,7 @@ UpdateIndexRelation(Oid indexoid,
 		pfree(predString);
 	}
 	else
-		predDatum = (Datum) 0;
+		predDatum = UndefinedDatum;
 
 
 	/*
@@ -654,10 +654,10 @@ UpdateIndexRelation(Oid indexoid,
 	values[Anum_pg_index_indclass - 1] = PointerGetDatum(indclass);
 	values[Anum_pg_index_indoption - 1] = PointerGetDatum(indoption);
 	values[Anum_pg_index_indexprs - 1] = exprsDatum;
-	if (exprsDatum == (Datum) 0)
+	if (exprsDatum == UndefinedDatum)
 		nulls[Anum_pg_index_indexprs - 1] = true;
 	values[Anum_pg_index_indpred - 1] = predDatum;
-	if (predDatum == (Datum) 0)
+	if (predDatum == UndefinedDatum)
 		nulls[Anum_pg_index_indpred - 1] = true;
 
 	tuple = heap_form_tuple(RelationGetDescr(pg_index), values, nulls);
@@ -1015,7 +1015,7 @@ index_create(Relation heapRelation,
 	 */
 	InsertPgClassTuple(pg_class, indexRelation,
 					   RelationGetRelid(indexRelation),
-					   (Datum) 0,
+					   UndefinedDatum,
 					   reloptions);
 
 	/* done with pg_class */

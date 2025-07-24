@@ -121,7 +121,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	CommandCounterIncrement();
 
 	/* parse and validate reloptions for the toast table */
-	toast_options = transformRelOptions((Datum) 0,
+	toast_options = transformRelOptions(UndefinedDatum,
 										create->options,
 										"toast",
 										validnsps,

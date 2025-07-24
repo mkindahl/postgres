@@ -85,7 +85,7 @@ convert_tuples_by_position(TupleDesc indesc,
 	n = indesc->natts + 1;		/* +1 for NULL */
 	map->invalues = (Datum *) palloc(n * sizeof(Datum));
 	map->inisnull = (bool *) palloc(n * sizeof(bool));
-	map->invalues[0] = (Datum) 0;	/* set up the NULL entry */
+	map->invalues[0] = UndefinedDatum;	/* set up the NULL entry */
 	map->inisnull[0] = true;
 
 	return map;
@@ -141,7 +141,7 @@ convert_tuples_by_name_attrmap(TupleDesc indesc,
 	n = indesc->natts + 1;		/* +1 for NULL */
 	map->invalues = (Datum *) palloc(n * sizeof(Datum));
 	map->inisnull = (bool *) palloc(n * sizeof(bool));
-	map->invalues[0] = (Datum) 0;	/* set up the NULL entry */
+	map->invalues[0] = UndefinedDatum;	/* set up the NULL entry */
 	map->inisnull[0] = true;
 
 	return map;
@@ -226,7 +226,7 @@ execute_attr_map_slot(AttrMap *attrMap,
 		/* attrMap->attnums[i] == 0 means it's a NULL datum. */
 		if (j == -1)
 		{
-			outvalues[i] = (Datum) 0;
+			outvalues[i] = UndefinedDatum;
 			outisnull[i] = true;
 		}
 		else

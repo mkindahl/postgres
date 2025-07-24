@@ -739,7 +739,7 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 	Datum	   *result_datum;
 	bool	   *result_isnull;
 	int64		rownum = 0;
-	Datum		val = (Datum) 0;
+	Datum		val = UndefinedDatum;
 	bool		isnull = true;
 	int			i;
 
@@ -788,7 +788,7 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 		if (pct_info[i].first_row > 0)
 			break;
 
-		result_datum[idx] = (Datum) 0;
+		result_datum[idx] = UndefinedDatum;
 		result_isnull[idx] = true;
 	}
 
@@ -859,8 +859,8 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 	Datum	   *result_datum;
 	bool	   *result_isnull;
 	int64		rownum = 0;
-	Datum		first_val = (Datum) 0;
-	Datum		second_val = (Datum) 0;
+	Datum		first_val = UndefinedDatum;
+	Datum		second_val = UndefinedDatum;
 	bool		isnull;
 	int			i;
 
@@ -911,7 +911,7 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 		if (pct_info[i].first_row > 0)
 			break;
 
-		result_datum[idx] = (Datum) 0;
+		result_datum[idx] = UndefinedDatum;
 		result_isnull[idx] = true;
 	}
 
@@ -1035,14 +1035,14 @@ mode_final(PG_FUNCTION_ARGS)
 	OSAPerGroupState *osastate;
 	Datum		val;
 	bool		isnull;
-	Datum		mode_val = (Datum) 0;
+	Datum		mode_val = UndefinedDatum;
 	int64		mode_freq = 0;
-	Datum		last_val = (Datum) 0;
+	Datum		last_val = UndefinedDatum;
 	int64		last_val_freq = 0;
 	bool		last_val_is_mode = false;
 	FmgrInfo   *equalfn;
-	Datum		abbrev_val = (Datum) 0;
-	Datum		last_abbrev_val = (Datum) 0;
+	Datum		abbrev_val = UndefinedDatum;
+	Datum		last_abbrev_val = UndefinedDatum;
 	bool		shouldfree;
 
 	Assert(AggCheckCallContext(fcinfo, NULL) == AGG_CONTEXT_AGGREGATE);
@@ -1301,8 +1301,8 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	int64		duplicate_count = 0;
 	OSAPerGroupState *osastate;
 	int			numDistinctCols;
-	Datum		abbrevVal = (Datum) 0;
-	Datum		abbrevOld = (Datum) 0;
+	Datum		abbrevVal = UndefinedDatum;
+	Datum		abbrevOld = UndefinedDatum;
 	TupleTableSlot *slot;
 	TupleTableSlot *extraslot;
 	TupleTableSlot *slot2;

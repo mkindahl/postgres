@@ -295,7 +295,7 @@ stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 	/* clear positional args */
 	for (int i = 0; arginfo[i].argname != NULL; i++)
 	{
-		positional_fcinfo->args[i].value = (Datum) 0;
+		positional_fcinfo->args[i].value = UndefinedDatum;
 		positional_fcinfo->args[i].isnull = true;
 	}
 

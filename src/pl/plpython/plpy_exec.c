@@ -214,7 +214,7 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			}
 
 			fcinfo->isnull = false;
-			rv = (Datum) 0;
+			rv = UndefinedDatum;
 		}
 		else if (plrv == Py_None &&
 				 srfstate && srfstate->iter == NULL)
@@ -225,7 +225,7 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			 * complain.
 			 */
 			fcinfo->isnull = true;
-			rv = (Datum) 0;
+			rv = UndefinedDatum;
 		}
 		else
 		{

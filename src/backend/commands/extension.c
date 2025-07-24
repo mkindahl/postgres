@@ -2275,7 +2275,7 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 		}
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -2344,7 +2344,7 @@ pg_available_extension_versions(PG_FUNCTION_ARGS)
 		}
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -2625,7 +2625,7 @@ pg_extension_update_paths(PG_FUNCTION_ARGS)
 		}
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -2861,7 +2861,7 @@ pg_get_loaded_modules(PG_FUNCTION_ARGS)
 							 values, nulls);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

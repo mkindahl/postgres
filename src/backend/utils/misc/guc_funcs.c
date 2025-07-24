@@ -1043,5 +1043,5 @@ show_all_file_settings(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }

@@ -101,7 +101,7 @@ InitializeShippableCache(void)
 	/* Set up invalidation callback on pg_foreign_server. */
 	CacheRegisterSyscacheCallback(FOREIGNSERVEROID,
 								  InvalidateShippableCacheCallback,
-								  (Datum) 0);
+								  UndefinedDatum);
 }
 
 /*

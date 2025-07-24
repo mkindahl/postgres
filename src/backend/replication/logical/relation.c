@@ -122,7 +122,7 @@ logicalrep_relmap_init(void)
 
 	/* Watch for invalidation events. */
 	CacheRegisterRelcacheCallback(logicalrep_relmap_invalidate_cb,
-								  (Datum) 0);
+								  UndefinedDatum);
 }
 
 /*
@@ -615,7 +615,7 @@ logicalrep_partmap_init(void)
 
 	/* Watch for invalidation events. */
 	CacheRegisterRelcacheCallback(logicalrep_partmap_invalidate_cb,
-								  (Datum) 0);
+								  UndefinedDatum);
 }
 
 /*

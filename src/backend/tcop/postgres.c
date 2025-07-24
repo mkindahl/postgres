@@ -1950,7 +1950,7 @@ exec_bind_message(StringInfo input_message)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("unsupported format code: %d",
 								pformat)));
-				pval = 0;		/* keep compiler quiet */
+				pval = UndefinedDatum;		/* keep compiler quiet */
 			}
 
 			/* Restore message buffer contents */

@@ -227,7 +227,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	PLpgSQL_function *func;
 	PLpgSQL_execstate *save_cur_estate;
 	ResourceOwner procedure_resowner;
-	volatile Datum retval = (Datum) 0;
+	volatile Datum retval = UndefinedDatum;
 	int			rc;
 
 	nonatomic = fcinfo->context &&

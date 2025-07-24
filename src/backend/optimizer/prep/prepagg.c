@@ -209,7 +209,7 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 								  Anum_pg_aggregate_agginitval,
 								  &initValueIsNull);
 	if (initValueIsNull)
-		initValue = (Datum) 0;
+		initValue = UndefinedDatum;
 	else
 		initValue = GetAggInitVal(textInitVal, aggtranstype);
 

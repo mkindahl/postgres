@@ -68,7 +68,7 @@ pg_lsn_in(PG_FUNCTION_ARGS)
 
 	result = pg_lsn_in_internal(str, &have_error);
 	if (have_error)
-		ereturn(fcinfo->context, (Datum) 0,
+		ereturn(fcinfo->context, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"pg_lsn", str)));

@@ -964,7 +964,7 @@ ParallelApplyWorkerMain(Datum main_arg)
 	 */
 	CacheRegisterSyscacheCallback(SUBSCRIPTIONRELMAP,
 								  invalidate_syncing_table_states,
-								  (Datum) 0);
+								  UndefinedDatum);
 
 	set_apply_error_context_origin(originname);
 

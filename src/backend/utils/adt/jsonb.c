@@ -267,7 +267,7 @@ jsonb_from_cstring(char *json, int len, bool unique_keys, Node *escontext)
 	sem.object_field_start = jsonb_in_object_field_start;
 
 	if (!pg_parse_json_or_errsave(&lex, &sem, escontext))
-		return (Datum) 0;
+		return UndefinedDatum;
 
 	/* after parsing, the item member has the composed jsonb structure */
 	PG_RETURN_POINTER(JsonbValueToJsonb(state.res));
@@ -1551,7 +1551,7 @@ jsonb_agg_transfn_worker(FunctionCallInfo fcinfo, bool absent_on_null)
 
 	/* turn the argument into jsonb in the normal function context */
 
-	val = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
+	val = PG_ARGISNULL(1) ? UndefinedDatum : PG_GETARG_DATUM(1);
 
 	memset(&elem, 0, sizeof(JsonbInState));
 
@@ -1761,7 +1761,7 @@ jsonb_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 
 	jbkey = JsonbValueToJsonb(elem.res);
 
-	val = PG_ARGISNULL(2) ? (Datum) 0 : PG_GETARG_DATUM(2);
+	val = PG_ARGISNULL(2) ? UndefinedDatum : PG_GETARG_DATUM(2);
 
 	memset(&elem, 0, sizeof(JsonbInState));
 

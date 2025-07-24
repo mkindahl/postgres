@@ -256,7 +256,7 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 	pqsignal(SIGUSR2, SIG_IGN); /* not used */
 
 	/* Advertise ourselves. */
-	on_shmem_exit(WalSummarizerShutdown, (Datum) 0);
+	on_shmem_exit(WalSummarizerShutdown, UndefinedDatum);
 	LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
 	WalSummarizerCtl->summarizer_pgprocno = MyProcNumber;
 	LWLockRelease(WALSummarizerLock);

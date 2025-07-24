@@ -389,7 +389,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	}
 	else
 	{
-		validUntil_datum = (Datum) 0;
+		validUntil_datum = UndefinedDatum;
 		validUntil_null = true;
 	}
 

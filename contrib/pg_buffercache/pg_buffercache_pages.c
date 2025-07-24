@@ -640,7 +640,7 @@ pg_buffercache_usage_counts(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

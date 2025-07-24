@@ -193,7 +193,7 @@ brin_minmax_consistent(PG_FUNCTION_ARGS)
 		default:
 			/* shouldn't happen */
 			elog(ERROR, "invalid strategy number %d", key->sk_strategy);
-			matches = 0;
+			matches = UndefinedDatum;
 			break;
 	}
 

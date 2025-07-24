@@ -897,7 +897,7 @@ tuplesort_putgintuple(Tuplesortstate *state, GinTuple *tuple, Size size)
 	memcpy(ctup, tuple, size);
 
 	stup.tuple = ctup;
-	stup.datum1 = (Datum) 0;
+	stup.datum1 = UndefinedDatum;
 	stup.isnull1 = false;
 
 	/* GetMemoryChunkSpace is not supported for bump contexts */
@@ -945,7 +945,7 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 		 * Set datum1 to zeroed representation for NULLs (to be consistent,
 		 * and to support cheap inequality tests for NULL abbreviated keys).
 		 */
-		stup.datum1 = !isNull ? val : (Datum) 0;
+		stup.datum1 = !isNull ? val : UndefinedDatum;
 		stup.isnull1 = isNull;
 		stup.tuple = NULL;		/* no separate storage */
 	}
@@ -1957,7 +1957,7 @@ readtup_index_gin(Tuplesortstate *state, SortTuple *stup,
 	stup->tuple = (void *) tuple;
 
 	/* no abbreviations (FIXME maybe use attrnum for this?) */
-	stup->datum1 = (Datum) 0;
+	stup->datum1 = UndefinedDatum;
 }
 
 /*
@@ -2047,7 +2047,7 @@ readtup_datum(Tuplesortstate *state, SortTuple *stup,
 	if (tuplen == 0)
 	{
 		/* it's NULL */
-		stup->datum1 = (Datum) 0;
+		stup->datum1 = UndefinedDatum;
 		stup->isnull1 = true;
 		stup->tuple = NULL;
 	}

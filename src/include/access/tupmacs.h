@@ -63,7 +63,7 @@ fetch_att(const void *T, bool attbyval, int attlen)
 				return Int64GetDatum(*((const int64 *) T));
 			default:
 				elog(ERROR, "unsupported byval length: %d", attlen);
-				return 0;
+				return UndefinedDatum;
 		}
 	}
 	else

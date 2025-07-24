@@ -2568,7 +2568,7 @@ ts_process_call(FuncCallContext *funcctx)
 		return result;
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 static TSVectorStat *
@@ -2680,7 +2680,7 @@ ts_stat1(PG_FUNCTION_ARGS)
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
-	if ((result = ts_process_call(funcctx)) != (Datum) 0)
+	if ((result = ts_process_call(funcctx)) != UndefinedDatum)
 		SRF_RETURN_NEXT(funcctx, result);
 	SRF_RETURN_DONE(funcctx);
 }
@@ -2707,7 +2707,7 @@ ts_stat2(PG_FUNCTION_ARGS)
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
-	if ((result = ts_process_call(funcctx)) != (Datum) 0)
+	if ((result = ts_process_call(funcctx)) != UndefinedDatum)
 		SRF_RETURN_NEXT(funcctx, result);
 	SRF_RETURN_DONE(funcctx);
 }

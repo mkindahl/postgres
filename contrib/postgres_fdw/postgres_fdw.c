@@ -4743,7 +4743,7 @@ apply_returning_filter(PgFdwDirectModifyState *dmstate,
 
 		if (j == 0)
 		{
-			values[i] = (Datum) 0;
+			values[i] = UndefinedDatum;
 			isnull[i] = true;
 		}
 		else

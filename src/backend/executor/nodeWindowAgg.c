@@ -230,7 +230,7 @@ initialize_windowaggregate(WindowAggState *winstate,
 	}
 	peraggstate->transValueIsNull = peraggstate->initValueIsNull;
 	peraggstate->transValueCount = 0;
-	peraggstate->resultValue = (Datum) 0;
+	peraggstate->resultValue = UndefinedDatum;
 	peraggstate->resultValueIsNull = true;
 }
 
@@ -612,7 +612,7 @@ finalize_windowaggregate(WindowAggState *winstate,
 		/* Fill any remaining argument positions with nulls */
 		for (i = 1; i < numFinalArgs; i++)
 		{
-			fcinfo->args[i].value = (Datum) 0;
+			fcinfo->args[i].value = UndefinedDatum;
 			fcinfo->args[i].isnull = true;
 			anynull = true;
 		}
@@ -620,7 +620,7 @@ finalize_windowaggregate(WindowAggState *winstate,
 		if (fcinfo->flinfo->fn_strict && anynull)
 		{
 			/* don't call a strict function with NULL inputs */
-			*result = (Datum) 0;
+			*result = UndefinedDatum;
 			*isnull = true;
 		}
 		else
@@ -896,7 +896,7 @@ eval_windowaggregates(WindowAggState *winstate)
 		{
 			if (!peraggstate->resulttypeByVal)
 				pfree(DatumGetPointer(peraggstate->resultValue));
-			peraggstate->resultValue = (Datum) 0;
+			peraggstate->resultValue = UndefinedDatum;
 			peraggstate->resultValueIsNull = true;
 		}
 	}
@@ -2366,7 +2366,7 @@ ExecWindowAgg(PlanState *pstate)
 					numfuncs = winstate->numfuncs;
 					for (i = 0; i < numfuncs; i++)
 					{
-						econtext->ecxt_aggvalues[i] = (Datum) 0;
+						econtext->ecxt_aggvalues[i] = UndefinedDatum;
 						econtext->ecxt_aggnulls[i] = true;
 					}
 
@@ -3020,7 +3020,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 								  &peraggstate->initValueIsNull);
 
 	if (peraggstate->initValueIsNull)
-		peraggstate->initValue = (Datum) 0;
+		peraggstate->initValue = UndefinedDatum;
 	else
 		peraggstate->initValue = GetAggInitVal(textInitVal,
 											   aggtranstype);
@@ -3413,7 +3413,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 		if (isout)
 			*isout = true;
 		*isnull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 	else
 	{
@@ -3639,7 +3639,7 @@ out_of_frame:
 	if (isout)
 		*isout = true;
 	*isnull = true;
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

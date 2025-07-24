@@ -145,7 +145,7 @@ multirange_in(PG_FUNCTION_ARGS)
 	if (*ptr == '{')
 		ptr++;
 	else
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed multirange literal: \"%s\"",
 						input_str),
@@ -158,7 +158,7 @@ multirange_in(PG_FUNCTION_ARGS)
 		char		ch = *ptr;
 
 		if (ch == '\0')
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed multirange literal: \"%s\"",
 							input_str),
@@ -187,7 +187,7 @@ multirange_in(PG_FUNCTION_ARGS)
 					parse_state = MULTIRANGE_AFTER_RANGE;
 				}
 				else
-					ereturn(escontext, (Datum) 0,
+					ereturn(escontext, UndefinedDatum,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 							 errmsg("malformed multirange literal: \"%s\"",
 									input_str),
@@ -261,7 +261,7 @@ multirange_in(PG_FUNCTION_ARGS)
 				else if (ch == '}')
 					parse_state = MULTIRANGE_FINISHED;
 				else
-					ereturn(escontext, (Datum) 0,
+					ereturn(escontext, UndefinedDatum,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 							 errmsg("malformed multirange literal: \"%s\"",
 									input_str),
@@ -285,7 +285,7 @@ multirange_in(PG_FUNCTION_ARGS)
 		ptr++;
 
 	if (*ptr != '\0')
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed multirange literal: \"%s\"",
 						input_str),
@@ -772,7 +772,7 @@ multirange_get_bounds(TypeCacheEntry *rangetyp,
 		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
 	}
 	else
-		lbound = (Datum) 0;
+		lbound = UndefinedDatum;
 
 	/* fetch upper bound, if any */
 	if (RANGE_HAS_UBOUND(flags))
@@ -782,7 +782,7 @@ multirange_get_bounds(TypeCacheEntry *rangetyp,
 		/* no need for att_addlength_pointer */
 	}
 	else
-		ubound = (Datum) 0;
+		ubound = UndefinedDatum;
 
 	/* emit results */
 	lower->val = lbound;

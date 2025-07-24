@@ -6676,7 +6676,7 @@ check_modified_virtual_generated(TupleDesc tupdesc, HeapTuple tuple)
 			if (!heap_attisnull(tuple, i + 1, tupdesc))
 			{
 				int			replCol = i + 1;
-				Datum		replValue = 0;
+				Datum replValue = UndefinedDatum;
 				bool		replIsnull = true;
 
 				tuple = heap_modify_tuple_by_cols(tuple, tupdesc, 1, &replCol, &replValue, &replIsnull);

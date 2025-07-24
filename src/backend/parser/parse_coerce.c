@@ -1284,7 +1284,7 @@ coerce_null_to_domain(Oid typid, int32 typmod, Oid collation,
 								baseTypeMod,
 								collation,
 								typlen,
-								(Datum) 0,
+								UndefinedDatum,
 								true,	/* isnull */
 								typbyval);
 	if (typid != baseTypeId)

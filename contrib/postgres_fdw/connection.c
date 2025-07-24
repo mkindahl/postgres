@@ -232,9 +232,11 @@ GetConnection(UserMapping *user, bool will_prep_stmt, PgFdwConnState **state)
 		RegisterXactCallback(pgfdw_xact_callback, NULL);
 		RegisterSubXactCallback(pgfdw_subxact_callback, NULL);
 		CacheRegisterSyscacheCallback(FOREIGNSERVEROID,
-									  pgfdw_inval_callback, (Datum) 0);
+									  pgfdw_inval_callback,
+									  UndefinedDatum);
 		CacheRegisterSyscacheCallback(USERMAPPINGOID,
-									  pgfdw_inval_callback, (Datum) 0);
+									  pgfdw_inval_callback,
+									  UndefinedDatum);
 	}
 
 	/* Set flag that we did GetConnection during the current transaction */

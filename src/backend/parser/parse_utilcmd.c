@@ -2549,7 +2549,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 											   index_rel->rd_rel->relam);
 				if (indclass->values[i] != defopclass ||
 					attform->attcollation != index_rel->rd_indcollation[i] ||
-					attoptions != (Datum) 0 ||
+					attoptions != UndefinedDatum ||
 					index_rel->rd_indoption[i] != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),

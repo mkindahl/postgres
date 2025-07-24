@@ -137,7 +137,7 @@ spgAddStartItem(SpGistScanOpaque so, bool isnull)
 				   FirstOffsetNumber);
 	startEntry->isLeaf = false;
 	startEntry->level = 0;
-	startEntry->value = (Datum) 0;
+	startEntry->value = UndefinedDatum;
 	startEntry->leafTuple = NULL;
 	startEntry->traversalValue = NULL;
 	startEntry->recheck = false;
@@ -477,7 +477,7 @@ spgNewHeapItem(SpGistScanOpaque so, int level, SpGistLeafTuple leafTuple,
 	 */
 	if (so->want_itup)
 	{
-		item->value = isnull ? (Datum) 0 :
+		item->value = isnull ? UndefinedDatum :
 			datumCopy(leafValue, so->state.attType.attbyval,
 					  so->state.attType.attlen);
 
@@ -495,7 +495,7 @@ spgNewHeapItem(SpGistScanOpaque so, int level, SpGistLeafTuple leafTuple,
 	}
 	else
 	{
-		item->value = (Datum) 0;
+		item->value = UndefinedDatum;
 		item->leafTuple = NULL;
 	}
 	item->traversalValue = NULL;
@@ -527,7 +527,7 @@ spgLeafTest(SpGistScanOpaque so, SpGistSearchItem *item,
 	{
 		/* Should not have arrived on a nulls page unless nulls are wanted */
 		Assert(so->searchNulls);
-		leafValue = (Datum) 0;
+		leafValue = UndefinedDatum;
 		distances = NULL;
 		recheck = false;
 		recheckDistances = false;
@@ -552,7 +552,7 @@ spgLeafTest(SpGistScanOpaque so, SpGistSearchItem *item,
 		in.returnData = so->want_itup;
 		in.leafDatum = SGLTDATUM(leafTuple, &so->state);
 
-		out.leafValue = (Datum) 0;
+		out.leafValue = UndefinedDatum;
 		out.recheck = false;
 		out.distances = NULL;
 		out.recheckDistances = false;
@@ -644,7 +644,7 @@ spgMakeInnerItem(SpGistScanOpaque so,
 		? datumCopy(out->reconstructedValues[i],
 					so->state.attLeafType.attbyval,
 					so->state.attLeafType.attlen)
-		: (Datum) 0;
+		: UndefinedDatum;
 
 	item->leafTuple = NULL;
 

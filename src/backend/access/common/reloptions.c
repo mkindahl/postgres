@@ -1337,7 +1337,7 @@ transformRelOptions(Datum oldOptions, List *defList, const char *nameSpace,
 	if (astate)
 		result = makeArrayResult(astate, CurrentMemoryContext);
 	else
-		result = (Datum) 0;
+		result = UndefinedDatum;
 
 	return result;
 }
@@ -1575,7 +1575,7 @@ parseLocalRelOptions(local_relopts *relopts, Datum options, bool validate)
 		i++;
 	}
 
-	if (options != (Datum) 0)
+	if (options != UndefinedDatum)
 		parseRelOptionsInternal(options, validate, values, nopts);
 
 	return values;

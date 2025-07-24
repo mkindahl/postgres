@@ -779,7 +779,7 @@ numeric_in(PG_FUNCTION_ARGS)
 		res = make_result_opt_error(&value, &have_error);
 
 		if (have_error)
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value overflows numeric format")));
 
@@ -789,7 +789,7 @@ numeric_in(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(res);
 
 invalid_syntax:
-	ereturn(escontext, (Datum) 0,
+	ereturn(escontext, UndefinedDatum,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"numeric", str)));
@@ -1517,7 +1517,7 @@ numeric_sign(PG_FUNCTION_ARGS)
 	}
 
 	Assert(false);
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 

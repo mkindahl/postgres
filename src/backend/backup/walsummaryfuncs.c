@@ -58,7 +58,7 @@ pg_available_wal_summaries(PG_FUNCTION_ARGS)
 		tuplestore_puttuple(rsi->setResult, tuple);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -167,7 +167,7 @@ pg_wal_summary_contents(PG_FUNCTION_ARGS)
 	DestroyBlockRefTableReader(reader);
 	FileClose(io.file);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

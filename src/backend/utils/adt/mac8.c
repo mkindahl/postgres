@@ -221,7 +221,7 @@ macaddr8_in(PG_FUNCTION_ARGS)
 	PG_RETURN_MACADDR8_P(result);
 
 fail:
-	ereturn(escontext, (Datum) 0,
+	ereturn(escontext, UndefinedDatum,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr8",
 					str)));

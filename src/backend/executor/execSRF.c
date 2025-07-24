@@ -554,7 +554,7 @@ restart:
 		fcache->funcResultStore = NULL;
 		*isDone = ExprEndResult;
 		*isNull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	/*
@@ -631,7 +631,7 @@ restart:
 	else
 	{
 		/* for a strict SRF, result for NULL is an empty set */
-		result = (Datum) 0;
+		result = UndefinedDatum;
 		*isNull = true;
 		*isDone = ExprEndResult;
 	}
@@ -677,7 +677,7 @@ restart:
 		/* if setResult was left null, treat it as empty set */
 		*isDone = ExprEndResult;
 		*isNull = true;
-		result = (Datum) 0;
+		result = UndefinedDatum;
 	}
 	else
 		ereport(ERROR,

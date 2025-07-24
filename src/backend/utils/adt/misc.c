@@ -236,7 +236,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		ereport(WARNING,
 				(errmsg("global tablespace never has databases")));
 		/* return empty tuplestore */
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	if (tablespaceOid == DEFAULTTABLESPACE_OID)
@@ -258,7 +258,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		ereport(WARNING,
 				(errmsg("%u is not a tablespace OID", tablespaceOid)));
 		/* return empty tuplestore */
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	while ((de = ReadDir(dirdesc, location)) != NULL)
@@ -290,7 +290,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 	}
 
 	FreeDir(dirdesc);
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 

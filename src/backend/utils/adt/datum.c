@@ -532,7 +532,7 @@ datumRestore(char **start_address, bool *isnull)
 	if (header == -2)
 	{
 		*isnull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	/* OK, datum is not null. */

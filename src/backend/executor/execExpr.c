@@ -724,7 +724,7 @@ ExecBuildUpdateProjection(List *targetList,
 			scratch.opcode = EEOP_CONST;
 			scratch.resvalue = &state->resvalue;
 			scratch.resnull = &state->resnull;
-			scratch.d.constval.value = (Datum) 0;
+			scratch.d.constval.value = UndefinedDatum;
 			scratch.d.constval.isnull = true;
 			ExprEvalPushStep(state, &scratch);
 			/* ... then assign it to the result slot */
@@ -4833,7 +4833,7 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 	scratch->opcode = EEOP_CONST;
 	scratch->resvalue = resv;
 	scratch->resnull = resnull;
-	scratch->d.constval.value = (Datum) 0;
+	scratch->d.constval.value = UndefinedDatum;
 	scratch->d.constval.isnull = true;
 	ExprEvalPushStep(state, scratch);
 

@@ -1773,7 +1773,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			rsi->isDone = ExprEndResult;
 
 			fcinfo->isnull = true;
-			result = (Datum) 0;
+			result = UndefinedDatum;
 
 			/* Deregister shutdown callback, if we made one */
 			if (fcache->shutdown_reg)
@@ -1804,7 +1804,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 				rsi->setDesc = CreateTupleDescCopy(fcache->junkFilter->jf_cleanTupType);
 
 			fcinfo->isnull = true;
-			result = (Datum) 0;
+			result = UndefinedDatum;
 
 			/* Deregister shutdown callback, if we made one */
 			if (fcache->shutdown_reg)
@@ -1830,7 +1830,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			else
 			{
 				fcinfo->isnull = true;
-				result = (Datum) 0;
+				result = UndefinedDatum;
 			}
 		}
 		else
@@ -1838,7 +1838,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			/* Should only get here for VOID functions and procedures */
 			Assert(fcache->func->rettype == VOIDOID);
 			fcinfo->isnull = true;
-			result = (Datum) 0;
+			result = UndefinedDatum;
 		}
 	}
 
@@ -2347,7 +2347,7 @@ check_sql_stmt_retval(List *queryTreeList,
 												   -1,
 												   InvalidOid,
 												   sizeof(int32),
-												   (Datum) 0,
+												   UndefinedDatum,
 												   true,	/* isnull */
 												   true /* byval */ );
 					upper_tlist = lappend(upper_tlist,
@@ -2393,7 +2393,7 @@ check_sql_stmt_retval(List *queryTreeList,
 											   -1,
 											   InvalidOid,
 											   sizeof(int32),
-											   (Datum) 0,
+											   UndefinedDatum,
 											   true,	/* isnull */
 											   true /* byval */ );
 				upper_tlist = lappend(upper_tlist,

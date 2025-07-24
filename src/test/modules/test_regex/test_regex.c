@@ -717,7 +717,7 @@ build_test_match_result(test_regex_ctx *matchctx)
 		}
 		else if (so < 0 || eo < 0)
 		{
-			elems[i] = (Datum) 0;
+			elems[i] = UndefinedDatum;
 			nulls[i] = true;
 		}
 		else if (buf)

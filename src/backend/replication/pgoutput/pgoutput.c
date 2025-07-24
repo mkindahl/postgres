@@ -535,9 +535,9 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 		{
 			CacheRegisterSyscacheCallback(PUBLICATIONOID,
 										  publication_invalidation_cb,
-										  (Datum) 0);
+										  UndefinedDatum);
 			CacheRegisterRelSyncCallback(rel_sync_cache_relation_cb,
-										 (Datum) 0);
+										 UndefinedDatum);
 			publication_callback_registered = true;
 		}
 
@@ -918,7 +918,7 @@ pgoutput_row_filter_init(PGOutputData *data, List *publications,
 	{
 		Publication *pub = lfirst(lc);
 		HeapTuple	rftuple = NULL;
-		Datum		rfdatum = 0;
+		Datum rfdatum = UndefinedDatum;
 		bool		pub_no_filter = true;
 
 		/*
@@ -1973,7 +1973,8 @@ init_rel_sync_cache(MemoryContext cachectx)
 		return;
 
 	/* We must update the cache entry for a relation after a relcache flush */
-	CacheRegisterRelcacheCallback(rel_sync_cache_relation_cb, (Datum) 0);
+	CacheRegisterRelcacheCallback(rel_sync_cache_relation_cb,
+				      UndefinedDatum);
 
 	/*
 	 * Flush all cache entries after a pg_namespace change, in case it was a
@@ -1988,7 +1989,7 @@ init_rel_sync_cache(MemoryContext cachectx)
 	 */
 	CacheRegisterSyscacheCallback(NAMESPACEOID,
 								  rel_sync_cache_publication_cb,
-								  (Datum) 0);
+								  UndefinedDatum);
 
 	relation_callbacks_registered = true;
 }

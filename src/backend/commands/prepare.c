@@ -735,7 +735,7 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 		}
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

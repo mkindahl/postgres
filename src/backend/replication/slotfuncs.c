@@ -451,7 +451,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 
 	LWLockRelease(ReplicationSlotControlLock);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

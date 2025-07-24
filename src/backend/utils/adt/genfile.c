@@ -522,7 +522,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 	{
 		/* Return empty tuplestore if appropriate */
 		if (missing_ok && errno == ENOENT)
-			return (Datum) 0;
+			return UndefinedDatum;
 		/* Otherwise, we can let ReadDir() throw the error */
 	}
 
@@ -544,7 +544,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 	}
 
 	FreeDir(dirdesc);
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -585,7 +585,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 	{
 		/* Return empty tuplestore if appropriate */
 		if (missing_ok && errno == ENOENT)
-			return (Datum) 0;
+			return UndefinedDatum;
 		/* Otherwise, we can let ReadDir() throw the error */
 	}
 
@@ -625,7 +625,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 	}
 
 	FreeDir(dirdesc);
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /* Function to return the list of files in the log directory */

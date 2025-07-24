@@ -993,7 +993,7 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 			}
 			else
 			{
-				scan->xs_orderbyvals[i] = (Datum) 0;
+				scan->xs_orderbyvals[i] = UndefinedDatum;
 				scan->xs_orderbynulls[i] = true;
 			}
 		}
@@ -1007,7 +1007,7 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 			}
 			else
 			{
-				scan->xs_orderbyvals[i] = (Datum) 0;
+				scan->xs_orderbyvals[i] = UndefinedDatum;
 				scan->xs_orderbynulls[i] = true;
 			}
 		}

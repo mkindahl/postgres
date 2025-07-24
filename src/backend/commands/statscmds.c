@@ -497,7 +497,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 		pfree(exprsString);
 	}
 	else
-		exprsDatum = (Datum) 0;
+		exprsDatum = UndefinedDatum;
 
 	statrel = table_open(StatisticExtRelationId, RowExclusiveLock);
 
@@ -519,7 +519,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	values[Anum_pg_statistic_ext_stxkind - 1] = PointerGetDatum(stxkind);
 
 	values[Anum_pg_statistic_ext_stxexprs - 1] = exprsDatum;
-	if (exprsDatum == (Datum) 0)
+	if (exprsDatum == UndefinedDatum)
 		nulls[Anum_pg_statistic_ext_stxexprs - 1] = true;
 
 	/* insert it into pg_statistic_ext */

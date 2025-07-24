@@ -38,7 +38,7 @@ static HeapTuple plsample_trigger_handler(PG_FUNCTION_ARGS);
 Datum
 plsample_call_handler(PG_FUNCTION_ARGS)
 {
-	Datum		retval = (Datum) 0;
+	Datum		retval = UndefinedDatum;
 
 	/*
 	 * Many languages will require cleanup that happens even in the event of

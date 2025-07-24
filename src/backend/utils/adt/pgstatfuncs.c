@@ -321,7 +321,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -682,7 +682,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			break;
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 
@@ -1567,7 +1567,7 @@ pg_stat_get_io(PG_FUNCTION_ARGS)
 								backends_io_stats->stat_reset_timestamp);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -1589,7 +1589,7 @@ pg_stat_get_backend_io(PG_FUNCTION_ARGS)
 	backend_stats = pgstat_fetch_stat_backend_by_pid(pid, &bktype);
 
 	if (!backend_stats)
-		return (Datum) 0;
+		return UndefinedDatum;
 
 	bktype_stats = &backend_stats->io_stats;
 
@@ -1603,7 +1603,7 @@ pg_stat_get_backend_io(PG_FUNCTION_ARGS)
 	/* save tuples with data from this PgStat_BktypeIO */
 	pg_stat_io_build_tuples(rsinfo, bktype_stats, bktype,
 							backend_stats->stat_reset_timestamp);
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*
@@ -1740,7 +1740,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 #define PG_STAT_GET_XACT_RELENTRY_INT64(stat)			\

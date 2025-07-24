@@ -499,12 +499,12 @@ bqarr_in(PG_FUNCTION_ARGS)
 	if (makepol(&state) == ERR)
 		PG_RETURN_NULL();
 	if (!state.num)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("empty query")));
 
 	if (state.num > QUERYTYPEMAXITEMS)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("number of query items (%d) exceeds the maximum allowed (%d)",
 						state.num, (int) QUERYTYPEMAXITEMS)));

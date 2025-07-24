@@ -648,7 +648,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 	/* Update the tuple */
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
-		values[i] = (Datum) 0;
+		values[i] = UndefinedDatum;
 		replaces[i] = false;
 		nulls[i] = false;
 	}

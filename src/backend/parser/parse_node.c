@@ -360,7 +360,7 @@ make_const(ParseState *pstate, A_Const *aconst)
 						-1,
 						InvalidOid,
 						-2,
-						(Datum) 0,
+						UndefinedDatum,
 						true,
 						false);
 		con->location = aconst->location;

@@ -885,7 +885,7 @@ PLyObject_ToBool(PLyObToDatum *arg, PyObject *plrv,
 	if (plrv == Py_None)
 	{
 		*isnull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 	*isnull = false;
 	return BoolGetDatum(PyObject_IsTrue(plrv));
@@ -901,12 +901,12 @@ PLyObject_ToBytea(PLyObToDatum *arg, PyObject *plrv,
 				  bool *isnull, bool inarray)
 {
 	PyObject   *volatile plrv_so = NULL;
-	Datum		rv = (Datum) 0;
+	Datum		rv = UndefinedDatum;
 
 	if (plrv == Py_None)
 	{
 		*isnull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 	*isnull = false;
 
@@ -950,7 +950,7 @@ PLyObject_ToComposite(PLyObToDatum *arg, PyObject *plrv,
 	if (plrv == Py_None)
 	{
 		*isnull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 	*isnull = false;
 
@@ -1082,7 +1082,7 @@ PLyObject_ToScalar(PLyObToDatum *arg, PyObject *plrv,
 	if (plrv == Py_None)
 	{
 		*isnull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 	*isnull = false;
 
@@ -1122,7 +1122,7 @@ PLyObject_ToTransform(PLyObToDatum *arg, PyObject *plrv,
 	if (plrv == Py_None)
 	{
 		*isnull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 	*isnull = false;
 	return FunctionCall1(&arg->u.transform.typtransform, PointerGetDatum(plrv));
@@ -1144,7 +1144,7 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 	if (plrv == Py_None)
 	{
 		*isnull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 	*isnull = false;
 
@@ -1364,7 +1364,7 @@ PLyMapping_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *mapping)
 
 		if (attr->attisdropped)
 		{
-			values[i] = (Datum) 0;
+			values[i] = UndefinedDatum;
 			nulls[i] = true;
 			continue;
 		}
@@ -1445,7 +1445,7 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 
 		if (TupleDescAttr(desc, i)->attisdropped)
 		{
-			values[i] = (Datum) 0;
+			values[i] = UndefinedDatum;
 			nulls[i] = true;
 			continue;
 		}
@@ -1504,7 +1504,7 @@ PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object
 
 		if (attr->attisdropped)
 		{
-			values[i] = (Datum) 0;
+			values[i] = UndefinedDatum;
 			nulls[i] = true;
 			continue;
 		}

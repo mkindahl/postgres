@@ -438,7 +438,7 @@ uuid_decrement(Relation rel, Datum existing, bool *underflow)
 
 	/* return value is undefined */
 	*underflow = true;
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 static Datum
@@ -463,7 +463,7 @@ uuid_increment(Relation rel, Datum existing, bool *overflow)
 
 	/* return value is undefined */
 	*overflow = true;
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 Datum

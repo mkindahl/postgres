@@ -1113,7 +1113,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 	{
 		for (i = 0; i < ncolumns; ++i)
 		{
-			values[i] = (Datum) 0;
+			values[i] = UndefinedDatum;
 			nulls[i] = true;
 		}
 	}

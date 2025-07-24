@@ -1078,7 +1078,7 @@ get_attoptions(Oid relid, int16 attnum)
 							  &isnull);
 
 	if (isnull)
-		result = (Datum) 0;
+		result = UndefinedDatum;
 	else
 		result = datumCopy(attopts, false, -1); /* text[] */
 

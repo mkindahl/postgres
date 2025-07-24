@@ -177,10 +177,10 @@ jsonPathFromCstring(char *in, int len, struct Node *escontext)
 	StringInfoData buf;
 
 	if (SOFT_ERROR_OCCURRED(escontext))
-		return (Datum) 0;
+		return UndefinedDatum;
 
 	if (!jsonpath)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"", "jsonpath",
 						in)));
@@ -192,7 +192,7 @@ jsonPathFromCstring(char *in, int len, struct Node *escontext)
 
 	if (!flattenJsonPathParseItem(&buf, NULL, escontext,
 								  jsonpath->expr, 0, false))
-		return (Datum) 0;
+		return UndefinedDatum;
 
 	res = (JsonPath *) buf.data;
 	SET_VARSIZE(res, buf.len);

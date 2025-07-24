@@ -211,7 +211,7 @@ X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
 	pfree(string_fieldname);
 	index = X509_NAME_get_index_by_NID(name, nid, -1);
 	if (index < 0)
-		return (Datum) 0;
+		return UndefinedDatum;
 	data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, index));
 	return ASN1_STRING_to_text(data);
 }

@@ -953,11 +953,11 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relrewrite - 1] = ObjectIdGetDatum(rd_rel->relrewrite);
 	values[Anum_pg_class_relfrozenxid - 1] = TransactionIdGetDatum(rd_rel->relfrozenxid);
 	values[Anum_pg_class_relminmxid - 1] = MultiXactIdGetDatum(rd_rel->relminmxid);
-	if (relacl != (Datum) 0)
+	if (relacl != UndefinedDatum)
 		values[Anum_pg_class_relacl - 1] = relacl;
 	else
 		nulls[Anum_pg_class_relacl - 1] = true;
-	if (reloptions != (Datum) 0)
+	if (reloptions != UndefinedDatum)
 		values[Anum_pg_class_reloptions - 1] = reloptions;
 	else
 		nulls[Anum_pg_class_reloptions - 1] = true;
@@ -3929,7 +3929,7 @@ StorePartitionKey(Relation rel,
 		pfree(exprString);
 	}
 	else
-		partexprDatum = (Datum) 0;
+		partexprDatum = UndefinedDatum;
 
 	pg_partitioned_table = table_open(PartitionedRelationId, RowExclusiveLock);
 

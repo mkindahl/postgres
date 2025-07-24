@@ -106,7 +106,7 @@ BuildEventTriggerCache(void)
 								  ALLOCSET_DEFAULT_SIZES);
 		CacheRegisterSyscacheCallback(EVENTTRIGGEROID,
 									  InvalidateEventCacheCallback,
-									  (Datum) 0);
+									  UndefinedDatum);
 	}
 
 	/* Prevent the memory context from being nuked while we're rebuilding. */

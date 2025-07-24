@@ -726,7 +726,7 @@ pltclu_call_handler(PG_FUNCTION_ARGS)
 static Datum
 pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted)
 {
-	Datum		retval = (Datum) 0;
+	Datum		retval = UndefinedDatum;
 	pltcl_call_state current_call_state;
 	pltcl_call_state *save_call_state;
 
@@ -764,7 +764,7 @@ pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted)
 		{
 			/* invoke the event trigger handler */
 			pltcl_event_trigger_handler(fcinfo, &current_call_state, pltrusted);
-			retval = (Datum) 0;
+			retval = UndefinedDatum;
 		}
 		else
 		{
@@ -978,7 +978,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 				MemoryContextSwitchTo(oldcxt);
 			}
 		}
-		retval = (Datum) 0;
+		retval = UndefinedDatum;
 		fcinfo->isnull = true;
 	}
 	else if (fcinfo->isnull)

@@ -88,7 +88,7 @@ bool_decrement(Relation rel, Datum existing, bool *underflow)
 	{
 		/* return value is undefined */
 		*underflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*underflow = false;
@@ -104,7 +104,7 @@ bool_increment(Relation rel, Datum existing, bool *overflow)
 	{
 		/* return value is undefined */
 		*overflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*overflow = false;
@@ -160,7 +160,7 @@ int2_decrement(Relation rel, Datum existing, bool *underflow)
 	{
 		/* return value is undefined */
 		*underflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*underflow = false;
@@ -176,7 +176,7 @@ int2_increment(Relation rel, Datum existing, bool *overflow)
 	{
 		/* return value is undefined */
 		*overflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*overflow = false;
@@ -228,7 +228,7 @@ int4_decrement(Relation rel, Datum existing, bool *underflow)
 	{
 		/* return value is undefined */
 		*underflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*underflow = false;
@@ -244,7 +244,7 @@ int4_increment(Relation rel, Datum existing, bool *overflow)
 	{
 		/* return value is undefined */
 		*overflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*overflow = false;
@@ -296,7 +296,7 @@ int8_decrement(Relation rel, Datum existing, bool *underflow)
 	{
 		/* return value is undefined */
 		*underflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*underflow = false;
@@ -312,7 +312,7 @@ int8_increment(Relation rel, Datum existing, bool *overflow)
 	{
 		/* return value is undefined */
 		*overflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*overflow = false;
@@ -462,7 +462,7 @@ oid_decrement(Relation rel, Datum existing, bool *underflow)
 	{
 		/* return value is undefined */
 		*underflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*underflow = false;
@@ -478,7 +478,7 @@ oid_increment(Relation rel, Datum existing, bool *overflow)
 	{
 		/* return value is undefined */
 		*overflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*overflow = false;
@@ -541,7 +541,7 @@ char_decrement(Relation rel, Datum existing, bool *underflow)
 	{
 		/* return value is undefined */
 		*underflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*underflow = false;
@@ -557,7 +557,7 @@ char_increment(Relation rel, Datum existing, bool *overflow)
 	{
 		/* return value is undefined */
 		*overflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*overflow = false;

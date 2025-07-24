@@ -329,7 +329,7 @@ jsonb_subscript_fetch_old(ExprState *state,
 	if (*op->resnull)
 	{
 		/* whole jsonb is null, so any element is too */
-		sbsrefstate->prevvalue = (Datum) 0;
+		sbsrefstate->prevvalue = UndefinedDatum;
 		sbsrefstate->prevnull = true;
 	}
 	else

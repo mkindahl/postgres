@@ -116,7 +116,7 @@ enum_in(PG_FUNCTION_ARGS)
 
 	/* must check length to prevent Assert failure within SearchSysCache */
 	if (strlen(name) >= NAMEDATALEN)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input value for enum %s: \"%s\"",
 						format_type_be(enumtypoid),
@@ -126,7 +126,7 @@ enum_in(PG_FUNCTION_ARGS)
 						  ObjectIdGetDatum(enumtypoid),
 						  CStringGetDatum(name));
 	if (!HeapTupleIsValid(tup))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input value for enum %s: \"%s\"",
 						format_type_be(enumtypoid),

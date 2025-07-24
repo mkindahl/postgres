@@ -2139,7 +2139,7 @@ each_object_field_end(void *state, char *fname, bool isnull)
 	if (isnull && _state->normalize_results)
 	{
 		nulls[1] = true;
-		values[1] = (Datum) 0;
+		values[1] = UndefinedDatum;
 	}
 	else if (_state->next_scalar)
 	{
@@ -2942,7 +2942,7 @@ populate_array(ArrayIOData *aio,
 								 : strlen(jsv->val.json.str)))
 		{
 			*isnull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 	}
 	else
@@ -2951,7 +2951,7 @@ populate_array(ArrayIOData *aio,
 		if (!populate_array_dim_jsonb(&ctx, jsv->val.jsonb, 1))
 		{
 			*isnull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 		ctx.dims[0] = ctx.sizes[0];
 	}
@@ -3070,7 +3070,7 @@ populate_composite(CompositeIOData *io,
 	update_cached_tupdesc(io, mcxt);
 
 	if (*isnull)
-		result = (Datum) 0;
+		result = UndefinedDatum;
 	else
 	{
 		HeapTupleHeader tuple;
@@ -3080,7 +3080,7 @@ populate_composite(CompositeIOData *io,
 		if (!JsValueToJsObject(jsv, &jso, escontext))
 		{
 			*isnull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 
 		/* populate resulting record tuple */
@@ -3090,7 +3090,7 @@ populate_composite(CompositeIOData *io,
 		if (SOFT_ERROR_OCCURRED(escontext))
 		{
 			*isnull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 		result = HeapTupleHeaderGetDatum(tuple);
 
@@ -3108,7 +3108,7 @@ populate_composite(CompositeIOData *io,
 							   escontext))
 		{
 			*isnull = true;
-			return (Datum) 0;
+			return UndefinedDatum;
 		}
 	}
 
@@ -3202,7 +3202,7 @@ populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv,
 	if (!InputFunctionCallSafe(&io->typiofunc, str, io->typioparam, typmod,
 							   escontext, &res))
 	{
-		res = (Datum) 0;
+		res = UndefinedDatum;
 		*isnull = true;
 	}
 
@@ -3226,7 +3226,7 @@ populate_domain(DomainIOData *io,
 	Datum		res;
 
 	if (*isnull)
-		res = (Datum) 0;
+		res = UndefinedDatum;
 	else
 	{
 		res = populate_record_field(io->base_io,
@@ -3240,7 +3240,7 @@ populate_domain(DomainIOData *io,
 						   escontext))
 	{
 		*isnull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	return res;
@@ -3440,7 +3440,7 @@ populate_record_field(ColumnIOData *col,
 	if (*isnull &&
 		typcat != TYPECAT_DOMAIN &&
 		typcat != TYPECAT_COMPOSITE_DOMAIN)
-		return (Datum) 0;
+		return UndefinedDatum;
 
 	switch (typcat)
 	{
@@ -3468,7 +3468,7 @@ populate_record_field(ColumnIOData *col,
 
 		default:
 			elog(ERROR, "unrecognized type category '%c'", typcat);
-			return (Datum) 0;
+			return UndefinedDatum;
 	}
 }
 
@@ -3575,7 +3575,7 @@ populate_record(TupleDesc tupdesc,
 	{
 		for (i = 0; i < ncolumns; ++i)
 		{
-			values[i] = (Datum) 0;
+			values[i] = UndefinedDatum;
 			nulls[i] = true;
 		}
 	}
@@ -3612,7 +3612,7 @@ populate_record(TupleDesc tupdesc,
 										  att->atttypmod,
 										  colname,
 										  mcxt,
-										  nulls[i] ? (Datum) 0 : values[i],
+										  nulls[i] ? UndefinedDatum : values[i],
 										  &field,
 										  &nulls[i],
 										  escontext,
@@ -4946,7 +4946,7 @@ jsonb_set_lax(PG_FUNCTION_ARGS)
 				 errmsg("JSON value must not be null"),
 				 errdetail("Exception was raised because null_value_treatment is \"raise_exception\"."),
 				 errhint("To avoid, either change the null_value_treatment argument or ensure that an SQL NULL is not passed.")));
-		return (Datum) 0;		/* silence stupider compilers */
+		return UndefinedDatum;		/* silence stupider compilers */
 	}
 	else if (strcmp(handle_val, "use_json_null") == 0)
 	{
@@ -4973,7 +4973,7 @@ jsonb_set_lax(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("null_value_treatment must be \"delete_key\", \"return_target\", \"use_json_null\", or \"raise_exception\"")));
-		return (Datum) 0;		/* silence stupider compilers */
+		return UndefinedDatum;		/* silence stupider compilers */
 	}
 }
 

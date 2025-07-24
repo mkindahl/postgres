@@ -993,7 +993,7 @@ line_in(PG_FUNCTION_ARGS)
 		if (!line_decode(s + 1, str, line, escontext))
 			PG_RETURN_NULL();
 		if (FPzero(line->A) && FPzero(line->B))
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid line specification: A and B cannot both be zero")));
 	}
@@ -1003,7 +1003,7 @@ line_in(PG_FUNCTION_ARGS)
 						 escontext))
 			PG_RETURN_NULL();
 		if (point_eq_point(&lseg.p[0], &lseg.p[1]))
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid line specification: must be two distinct points")));
 
@@ -1412,7 +1412,7 @@ path_in(PG_FUNCTION_ARGS)
 	int			depth = 0;
 
 	if ((npts = pair_count(str, ',')) <= 0)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"path", str)));
@@ -1433,7 +1433,7 @@ path_in(PG_FUNCTION_ARGS)
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(path->p[0]) || size <= base_size)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("too many points requested")));
 
@@ -1449,7 +1449,7 @@ path_in(PG_FUNCTION_ARGS)
 	if (depth >= 1)
 	{
 		if (*s++ != RDELIM)
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
 							"path", str)));
@@ -1457,7 +1457,7 @@ path_in(PG_FUNCTION_ARGS)
 			s++;
 	}
 	if (*s != '\0')
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"path", str)));
@@ -3423,7 +3423,7 @@ poly_in(PG_FUNCTION_ARGS)
 	bool		isopen;
 
 	if ((npts = pair_count(str, ',')) <= 0)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"polygon", str)));
@@ -3433,7 +3433,7 @@ poly_in(PG_FUNCTION_ARGS)
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("too many points requested")));
 
@@ -4645,7 +4645,7 @@ circle_in(PG_FUNCTION_ARGS)
 
 	/* We have to accept NaN. */
 	if (circle->radius < 0.0)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"circle", str)));
@@ -4660,14 +4660,14 @@ circle_in(PG_FUNCTION_ARGS)
 				s++;
 		}
 		else
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type %s: \"%s\"",
 							"circle", str)));
 	}
 
 	if (*s != '\0')
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"circle", str)));

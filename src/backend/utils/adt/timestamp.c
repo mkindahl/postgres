@@ -199,7 +199,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range: \"%s\"", str)));
 			break;
@@ -452,7 +452,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, &tz, &result) != 0)
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range: \"%s\"", str)));
 			break;
@@ -943,7 +943,7 @@ interval_in(PG_FUNCTION_ARGS)
 	{
 		case DTK_DELTA:
 			if (itmin2interval(itm_in, result) != 0)
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("interval out of range")));
 			break;
@@ -2294,7 +2294,7 @@ timestamp_decrement(Relation rel, Datum existing, bool *underflow)
 	{
 		/* return value is undefined */
 		*underflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*underflow = false;
@@ -2311,7 +2311,7 @@ timestamp_increment(Relation rel, Datum existing, bool *overflow)
 	{
 		/* return value is undefined */
 		*overflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*overflow = false;

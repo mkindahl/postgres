@@ -244,7 +244,7 @@ pg_get_backend_memory_contexts(PG_FUNCTION_ARGS)
 
 	hash_destroy(context_id_lookup);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 /*

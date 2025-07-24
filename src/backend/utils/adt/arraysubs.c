@@ -407,7 +407,7 @@ array_subscript_fetch_old(ExprState *state,
 	if (*op->resnull)
 	{
 		/* whole array is null, so any element is too */
-		sbsrefstate->prevvalue = (Datum) 0;
+		sbsrefstate->prevvalue = UndefinedDatum;
 		sbsrefstate->prevnull = true;
 	}
 	else
@@ -447,7 +447,7 @@ array_subscript_fetch_old_slice(ExprState *state,
 	if (*op->resnull)
 	{
 		/* whole array is null, so any slice is too */
-		sbsrefstate->prevvalue = (Datum) 0;
+		sbsrefstate->prevvalue = UndefinedDatum;
 		sbsrefstate->prevnull = true;
 	}
 	else

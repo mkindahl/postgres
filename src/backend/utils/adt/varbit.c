@@ -193,7 +193,7 @@ bit_in(PG_FUNCTION_ARGS)
 	else
 	{
 		if (slen > VARBITMAXLEN / 4)
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("bit string length exceeds the maximum allowed (%d)",
 							VARBITMAXLEN)));
@@ -207,7 +207,7 @@ bit_in(PG_FUNCTION_ARGS)
 	if (atttypmod <= 0)
 		atttypmod = bitlen;
 	else if (bitlen != atttypmod)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
 				 errmsg("bit string length %d does not match type bit(%d)",
 						bitlen, atttypmod)));
@@ -229,7 +229,7 @@ bit_in(PG_FUNCTION_ARGS)
 			if (*sp == '1')
 				*r |= x;
 			else if (*sp != '0')
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("\"%.*s\" is not a valid binary digit",
 								pg_mblen(sp), sp)));
@@ -254,7 +254,7 @@ bit_in(PG_FUNCTION_ARGS)
 			else if (*sp >= 'a' && *sp <= 'f')
 				x = (bits8) (*sp - 'a') + 10;
 			else
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("\"%.*s\" is not a valid hexadecimal digit",
 								pg_mblen(sp), sp)));
@@ -494,7 +494,7 @@ varbit_in(PG_FUNCTION_ARGS)
 	else
 	{
 		if (slen > VARBITMAXLEN / 4)
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("bit string length exceeds the maximum allowed (%d)",
 							VARBITMAXLEN)));
@@ -508,7 +508,7 @@ varbit_in(PG_FUNCTION_ARGS)
 	if (atttypmod <= 0)
 		atttypmod = bitlen;
 	else if (bitlen > atttypmod)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 				 errmsg("bit string too long for type bit varying(%d)",
 						atttypmod)));
@@ -530,7 +530,7 @@ varbit_in(PG_FUNCTION_ARGS)
 			if (*sp == '1')
 				*r |= x;
 			else if (*sp != '0')
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("\"%.*s\" is not a valid binary digit",
 								pg_mblen(sp), sp)));
@@ -555,7 +555,7 @@ varbit_in(PG_FUNCTION_ARGS)
 			else if (*sp >= 'a' && *sp <= 'f')
 				x = (bits8) (*sp - 'a') + 10;
 			else
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("\"%.*s\" is not a valid hexadecimal digit",
 								pg_mblen(sp), sp)));

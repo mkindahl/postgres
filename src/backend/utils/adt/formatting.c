@@ -4214,7 +4214,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 
 	if (!do_to_timestamp(date_txt, fmt, collid, strict,
 						 &tm, &fsec, &ftz, &fprec, &flags, escontext))
-		return (Datum) 0;
+		return UndefinedDatum;
 
 	*typmod = fprec ? fprec : -1;	/* fractional part precision */
 
@@ -4239,13 +4239,13 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 					 */
 					Assert(!strict);
 
-					ereturn(escontext, (Datum) 0,
+					ereturn(escontext, UndefinedDatum,
 							(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 							 errmsg("missing time zone in input string for type timestamptz")));
 				}
 
 				if (tm2timestamp(&tm, fsec, tz, &result) != 0)
-					ereturn(escontext, (Datum) 0,
+					ereturn(escontext, UndefinedDatum,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamptz out of range")));
 
@@ -4259,7 +4259,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 				Timestamp	result;
 
 				if (tm2timestamp(&tm, fsec, NULL, &result) != 0)
-					ereturn(escontext, (Datum) 0,
+					ereturn(escontext, UndefinedDatum,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
 
@@ -4273,7 +4273,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 		{
 			if (flags & DCH_ZONED)
 			{
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 						 errmsg("datetime format is zoned but not timed")));
 			}
@@ -4283,7 +4283,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 
 				/* Prevent overflow in Julian-day routines */
 				if (!IS_VALID_JULIAN(tm.tm_year, tm.tm_mon, tm.tm_mday))
-					ereturn(escontext, (Datum) 0,
+					ereturn(escontext, UndefinedDatum,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("date out of range: \"%s\"",
 									text_to_cstring(date_txt))));
@@ -4293,7 +4293,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 
 				/* Now check for just-out-of-range dates */
 				if (!IS_VALID_DATE(result))
-					ereturn(escontext, (Datum) 0,
+					ereturn(escontext, UndefinedDatum,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("date out of range: \"%s\"",
 									text_to_cstring(date_txt))));
@@ -4322,13 +4322,13 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 				 */
 				Assert(!strict);
 
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 						 errmsg("missing time zone in input string for type timetz")));
 			}
 
 			if (tm2timetz(&tm, fsec, *tz, result) != 0)
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timetz out of range")));
 
@@ -4342,7 +4342,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 			TimeADT		result;
 
 			if (tm2time(&tm, fsec, &result) != 0)
-				ereturn(escontext, (Datum) 0,
+				ereturn(escontext, UndefinedDatum,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("time out of range")));
 
@@ -4354,7 +4354,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 	}
 	else
 	{
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("datetime format is not dated and not timed")));
 	}

@@ -216,7 +216,7 @@ ProcSignalInit(const uint8 *cancel_key, int cancel_key_len)
 	MyProcSignalSlot = slot;
 
 	/* Set up to release the slot on process exit */
-	on_shmem_exit(CleanupProcSignalState, (Datum) 0);
+	on_shmem_exit(CleanupProcSignalState, UndefinedDatum);
 }
 
 /*

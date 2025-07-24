@@ -150,7 +150,7 @@ array_append(PG_FUNCTION_ARGS)
 	eah = fetch_array_arg_replace_nulls(fcinfo, 0);
 	isNull = PG_ARGISNULL(1);
 	if (isNull)
-		newelem = (Datum) 0;
+		newelem = UndefinedDatum;
 	else
 		newelem = PG_GETARG_DATUM(1);
 
@@ -232,7 +232,7 @@ array_prepend(PG_FUNCTION_ARGS)
 
 	isNull = PG_ARGISNULL(0);
 	if (isNull)
-		newelem = (Datum) 0;
+		newelem = UndefinedDatum;
 	else
 		newelem = PG_GETARG_DATUM(0);
 	eah = fetch_array_arg_replace_nulls(fcinfo, 1);
@@ -581,7 +581,7 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 	else
 		state = (ArrayBuildState *) PG_GETARG_POINTER(0);
 
-	elem = PG_ARGISNULL(1) ? (Datum) 0 : PG_GETARG_DATUM(1);
+	elem = PG_ARGISNULL(1) ? UndefinedDatum : PG_GETARG_DATUM(1);
 
 	state = accumArrayResult(state,
 							 elem,
@@ -637,7 +637,7 @@ array_agg_combine(PG_FUNCTION_ARGS)
 											   state1->typbyval,
 											   state1->typlen);
 			else
-				state1->dvalues[i] = (Datum) 0;
+				state1->dvalues[i] = UndefinedDatum;
 		}
 
 		MemoryContextSwitchTo(old_context);
@@ -676,7 +676,7 @@ array_agg_combine(PG_FUNCTION_ARGS)
 							  state1->typbyval,
 							  state1->typlen);
 			else
-				state1->dvalues[i + state1->nelems] = (Datum) 0;
+				state1->dvalues[i + state1->nelems] = UndefinedDatum;
 		}
 
 		memcpy(&state1->dnulls[state1->nelems], state2->dnulls,
@@ -862,7 +862,7 @@ array_agg_deserialize(PG_FUNCTION_ARGS)
 
 			if (result->dnulls[i])
 			{
-				result->dvalues[i] = (Datum) 0;
+				result->dvalues[i] = UndefinedDatum;
 				continue;
 			}
 
@@ -1356,7 +1356,7 @@ array_position_common(FunctionCallInfo fcinfo)
 		/* fast return when the array doesn't have nulls */
 		if (!array_contains_nulls(array))
 			PG_RETURN_NULL();
-		searched_element = (Datum) 0;
+		searched_element = UndefinedDatum;
 		null_search = true;
 	}
 	else
@@ -1512,7 +1512,7 @@ array_positions(PG_FUNCTION_ARGS)
 		/* fast return when the array doesn't have nulls */
 		if (!array_contains_nulls(array))
 			PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
-		searched_element = (Datum) 0;
+		searched_element = UndefinedDatum;
 		null_search = true;
 	}
 	else

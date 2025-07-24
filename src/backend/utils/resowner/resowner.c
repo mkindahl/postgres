@@ -597,7 +597,7 @@ ResourceOwnerForget(ResourceOwner owner, Datum value, const ResourceOwnerDesc *k
 			if (owner->hash[idx].item == value &&
 				owner->hash[idx].kind == kind)
 			{
-				owner->hash[idx].item = (Datum) 0;
+				owner->hash[idx].item = UndefinedDatum;
 				owner->hash[idx].kind = NULL;
 				owner->nhash--;
 
@@ -848,7 +848,7 @@ ResourceOwnerReleaseAllOfKind(ResourceOwner owner, const ResourceOwnerDesc *kind
 		{
 			Datum		value = owner->hash[i].item;
 
-			owner->hash[i].item = (Datum) 0;
+			owner->hash[i].item = UndefinedDatum;
 			owner->hash[i].kind = NULL;
 			owner->nhash--;
 

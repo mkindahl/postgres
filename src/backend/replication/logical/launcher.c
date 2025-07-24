@@ -752,7 +752,7 @@ logicalrep_worker_attach(int slot)
 	}
 
 	MyLogicalRepWorker->proc = MyProc;
-	before_shmem_exit(logicalrep_worker_onexit, (Datum) 0);
+	before_shmem_exit(logicalrep_worker_onexit, UndefinedDatum);
 
 	LWLockRelease(LogicalRepWorkerLock);
 }
@@ -964,7 +964,7 @@ ApplyLauncherRegister(void)
 			 "logical replication launcher");
 	bgw.bgw_restart_time = 5;
 	bgw.bgw_notify_pid = 0;
-	bgw.bgw_main_arg = (Datum) 0;
+	bgw.bgw_main_arg = UndefinedDatum;
 
 	RegisterBackgroundWorker(&bgw);
 }
@@ -1150,7 +1150,7 @@ ApplyLauncherMain(Datum main_arg)
 	ereport(DEBUG1,
 			(errmsg_internal("logical replication launcher started")));
 
-	before_shmem_exit(logicalrep_launcher_onexit, (Datum) 0);
+	before_shmem_exit(logicalrep_launcher_onexit, UndefinedDatum);
 
 	Assert(LogicalRepCtx->launcher_pid == 0);
 	LogicalRepCtx->launcher_pid = MyProcPid;
@@ -1608,5 +1608,5 @@ pg_stat_get_subscription(PG_FUNCTION_ARGS)
 
 	LWLockRelease(LogicalRepWorkerLock);
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }

@@ -222,7 +222,7 @@ range_recv(PG_FUNCTION_ARGS)
 		pfree(bound_buf.data);
 	}
 	else
-		lower.val = (Datum) 0;
+		lower.val = UndefinedDatum;
 
 	if (RANGE_HAS_UBOUND(flags))
 	{
@@ -240,7 +240,7 @@ range_recv(PG_FUNCTION_ARGS)
 		pfree(bound_buf.data);
 	}
 	else
-		upper.val = (Datum) 0;
+		upper.val = UndefinedDatum;
 
 	pq_getmsgend(buf);
 
@@ -386,12 +386,12 @@ range_constructor2(PG_FUNCTION_ARGS)
 
 	typcache = range_get_typcache(fcinfo, rngtypid);
 
-	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
+	lower.val = PG_ARGISNULL(0) ? UndefinedDatum : arg1;
 	lower.infinite = PG_ARGISNULL(0);
 	lower.inclusive = true;
 	lower.lower = true;
 
-	upper.val = PG_ARGISNULL(1) ? (Datum) 0 : arg2;
+	upper.val = PG_ARGISNULL(1) ? UndefinedDatum : arg2;
 	upper.infinite = PG_ARGISNULL(1);
 	upper.inclusive = false;
 	upper.lower = false;
@@ -423,12 +423,12 @@ range_constructor3(PG_FUNCTION_ARGS)
 
 	flags = range_parse_flags(text_to_cstring(PG_GETARG_TEXT_PP(2)));
 
-	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
+	lower.val = PG_ARGISNULL(0) ? UndefinedDatum : arg1;
 	lower.infinite = PG_ARGISNULL(0);
 	lower.inclusive = (flags & RANGE_LB_INC) != 0;
 	lower.lower = true;
 
-	upper.val = PG_ARGISNULL(1) ? (Datum) 0 : arg2;
+	upper.val = PG_ARGISNULL(1) ? UndefinedDatum : arg2;
 	upper.infinite = PG_ARGISNULL(1);
 	upper.inclusive = (flags & RANGE_UB_INC) != 0;
 	upper.lower = false;
@@ -1545,7 +1545,7 @@ int4range_canonical(PG_FUNCTION_ARGS)
 
 		/* Handle possible overflow manually */
 		if (unlikely(bnd == PG_INT32_MAX))
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("integer out of range")));
 		lower.val = Int32GetDatum(bnd + 1);
@@ -1558,7 +1558,7 @@ int4range_canonical(PG_FUNCTION_ARGS)
 
 		/* Handle possible overflow manually */
 		if (unlikely(bnd == PG_INT32_MAX))
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("integer out of range")));
 		upper.val = Int32GetDatum(bnd + 1);
@@ -1592,7 +1592,7 @@ int8range_canonical(PG_FUNCTION_ARGS)
 
 		/* Handle possible overflow manually */
 		if (unlikely(bnd == PG_INT64_MAX))
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("bigint out of range")));
 		lower.val = Int64GetDatum(bnd + 1);
@@ -1605,7 +1605,7 @@ int8range_canonical(PG_FUNCTION_ARGS)
 
 		/* Handle possible overflow manually */
 		if (unlikely(bnd == PG_INT64_MAX))
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("bigint out of range")));
 		upper.val = Int64GetDatum(bnd + 1);
@@ -1641,7 +1641,7 @@ daterange_canonical(PG_FUNCTION_ARGS)
 		/* Check for overflow -- note we already eliminated PG_INT32_MAX */
 		bnd++;
 		if (unlikely(!IS_VALID_DATE(bnd)))
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("date out of range")));
 		lower.val = DateADTGetDatum(bnd);
@@ -1656,7 +1656,7 @@ daterange_canonical(PG_FUNCTION_ARGS)
 		/* Check for overflow -- note we already eliminated PG_INT32_MAX */
 		bnd++;
 		if (unlikely(!IS_VALID_DATE(bnd)))
-			ereturn(escontext, (Datum) 0,
+			ereturn(escontext, UndefinedDatum,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("date out of range")));
 		upper.val = DateADTGetDatum(bnd);
@@ -1948,7 +1948,7 @@ range_deserialize(TypeCacheEntry *typcache, const RangeType *range,
 		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
 	}
 	else
-		lbound = (Datum) 0;
+		lbound = UndefinedDatum;
 
 	/* fetch upper bound, if any */
 	if (RANGE_HAS_UBOUND(flags))
@@ -1958,7 +1958,7 @@ range_deserialize(TypeCacheEntry *typcache, const RangeType *range,
 		/* no need for att_addlength_pointer */
 	}
 	else
-		ubound = (Datum) 0;
+		ubound = UndefinedDatum;
 
 	/* emit results */
 
@@ -2229,12 +2229,12 @@ make_empty_range(TypeCacheEntry *typcache)
 	RangeBound	lower;
 	RangeBound	upper;
 
-	lower.val = (Datum) 0;
+	lower.val = UndefinedDatum;
 	lower.infinite = false;
 	lower.inclusive = false;
 	lower.lower = true;
 
-	upper.val = (Datum) 0;
+	upper.val = UndefinedDatum;
 	upper.infinite = false;
 	upper.inclusive = false;
 	upper.lower = false;

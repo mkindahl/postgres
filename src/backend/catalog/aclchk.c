@@ -3101,7 +3101,7 @@ object_aclmask_ext(Oid classid, Oid objectid, Oid roleid,
 	{
 		/* No ACL, so build default ACL */
 		acl = acldefault(get_object_type(classid, objectid), ownerId);
-		aclDatum = (Datum) 0;
+		aclDatum = UndefinedDatum;
 	}
 	else
 	{
@@ -3338,7 +3338,7 @@ pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
 				acl = acldefault(OBJECT_TABLE, ownerId);
 				break;
 		}
-		aclDatum = (Datum) 0;
+		aclDatum = UndefinedDatum;
 	}
 	else
 	{
@@ -3430,7 +3430,7 @@ pg_parameter_aclmask(const char *name, Oid roleid, AclMode mask, AclMaskHow how)
 		{
 			/* No ACL, so build default ACL */
 			acl = acldefault(OBJECT_PARAMETER_ACL, BOOTSTRAP_SUPERUSERID);
-			aclDatum = (Datum) 0;
+			aclDatum = UndefinedDatum;
 		}
 		else
 		{
@@ -3485,7 +3485,7 @@ pg_parameter_acl_aclmask(Oid acl_oid, Oid roleid, AclMode mask, AclMaskHow how)
 	{
 		/* No ACL, so build default ACL */
 		acl = acldefault(OBJECT_PARAMETER_ACL, BOOTSTRAP_SUPERUSERID);
-		aclDatum = (Datum) 0;
+		aclDatum = UndefinedDatum;
 	}
 	else
 	{
@@ -3565,7 +3565,7 @@ pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 	{
 		/* No ACL, so build default ACL */
 		acl = acldefault(OBJECT_LARGEOBJECT, ownerId);
-		aclDatum = (Datum) 0;
+		aclDatum = UndefinedDatum;
 	}
 	else
 	{
@@ -3659,7 +3659,7 @@ pg_namespace_aclmask_ext(Oid nsp_oid, Oid roleid,
 	{
 		/* No ACL, so build default ACL */
 		acl = acldefault(OBJECT_SCHEMA, ownerId);
-		aclDatum = (Datum) 0;
+		aclDatum = UndefinedDatum;
 	}
 	else
 	{
@@ -3795,7 +3795,7 @@ pg_type_aclmask_ext(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how,
 	{
 		/* No ACL, so build default ACL */
 		acl = acldefault(OBJECT_TYPE, ownerId);
-		aclDatum = (Datum) 0;
+		aclDatum = UndefinedDatum;
 	}
 	else
 	{

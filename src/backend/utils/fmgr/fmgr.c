@@ -1533,7 +1533,7 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
 	Datum		result;
 
 	if (str == NULL && flinfo->fn_strict)
-		return (Datum) 0;		/* just return null result */
+		return UndefinedDatum;		/* just return null result */
 
 	InitFunctionCallInfoData(*fcinfo, flinfo, 3, InvalidOid, NULL, NULL);
 
@@ -1591,7 +1591,7 @@ InputFunctionCallSafe(FmgrInfo *flinfo, char *str,
 
 	if (str == NULL && flinfo->fn_strict)
 	{
-		*result = (Datum) 0;	/* just return null result */
+		*result = UndefinedDatum;	/* just return null result */
 		return true;
 	}
 
@@ -1646,7 +1646,7 @@ DirectInputFunctionCallSafe(PGFunction func, char *str,
 
 	if (str == NULL)
 	{
-		*result = (Datum) 0;	/* just return null result */
+		*result = UndefinedDatum;	/* just return null result */
 		return true;
 	}
 
@@ -1701,7 +1701,7 @@ ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
 	Datum		result;
 
 	if (buf == NULL && flinfo->fn_strict)
-		return (Datum) 0;		/* just return null result */
+		return UndefinedDatum;		/* just return null result */
 
 	InitFunctionCallInfoData(*fcinfo, flinfo, 3, InvalidOid, NULL, NULL);
 

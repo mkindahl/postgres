@@ -548,14 +548,14 @@ pg_options_to_table(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			values[1] = (Datum) 0;
+			values[1] = UndefinedDatum;
 			nulls[1] = true;
 		}
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
 							 values, nulls);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 }
 
 

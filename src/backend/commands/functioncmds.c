@@ -1506,7 +1506,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 
 		if (a == NULL)
 		{
-			repl_val[Anum_pg_proc_proconfig - 1] = (Datum)0;
+			repl_val[Anum_pg_proc_proconfig - 1] = UndefinedDatum;
 			repl_null[Anum_pg_proc_proconfig - 1] = true;
 		}
 		else

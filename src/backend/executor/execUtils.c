@@ -268,10 +268,10 @@ CreateExprContextInternal(EState *estate, Size minContextSize,
 	econtext->ecxt_aggvalues = NULL;
 	econtext->ecxt_aggnulls = NULL;
 
-	econtext->caseValue_datum = (Datum) 0;
+	econtext->caseValue_datum = UndefinedDatum;
 	econtext->caseValue_isNull = true;
 
-	econtext->domainValue_datum = (Datum) 0;
+	econtext->domainValue_datum = UndefinedDatum;
 	econtext->domainValue_isNull = true;
 
 	econtext->ecxt_estate = estate;
@@ -382,10 +382,10 @@ CreateStandaloneExprContext(void)
 	econtext->ecxt_aggvalues = NULL;
 	econtext->ecxt_aggnulls = NULL;
 
-	econtext->caseValue_datum = (Datum) 0;
+	econtext->caseValue_datum = UndefinedDatum;
 	econtext->caseValue_isNull = true;
 
-	econtext->domainValue_datum = (Datum) 0;
+	econtext->domainValue_datum = UndefinedDatum;
 	econtext->domainValue_isNull = true;
 
 	econtext->ecxt_estate = NULL;
@@ -1078,7 +1078,7 @@ GetAttributeByName(HeapTupleHeader tuple, const char *attname, bool *isNull)
 	{
 		/* Kinda bogus but compatible with old behavior... */
 		*isNull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	tupType = HeapTupleHeaderGetTypeId(tuple);
@@ -1141,7 +1141,7 @@ GetAttributeByNum(HeapTupleHeader tuple,
 	{
 		/* Kinda bogus but compatible with old behavior... */
 		*isNull = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	tupType = HeapTupleHeaderGetTypeId(tuple);

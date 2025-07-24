@@ -287,7 +287,7 @@ ExecFilterJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 
 		if (j == 0)
 		{
-			values[i] = (Datum) 0;
+			values[i] = UndefinedDatum;
 			isnull[i] = true;
 		}
 		else

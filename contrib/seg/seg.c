@@ -230,7 +230,7 @@ gseg_union(PG_FUNCTION_ARGS)
 	int		   *sizep = (int *) PG_GETARG_POINTER(1);
 	int			numranges,
 				i;
-	Datum		out = 0;
+	Datum out = UndefinedDatum;
 	Datum		tmp;
 
 #ifdef GIST_DEBUG

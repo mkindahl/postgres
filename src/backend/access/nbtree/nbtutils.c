@@ -154,7 +154,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 			arg = index_getattr(itup, i + 1, itupdesc, &null);
 		else
 		{
-			arg = (Datum) 0;
+			arg = UndefinedDatum;
 			null = true;
 		}
 		flags = (null ? SK_ISNULL : 0) | (indoption[i] << SK_BT_INDOPTION_SHIFT);
@@ -596,7 +596,7 @@ _bt_skiparray_set_isnull(Relation rel, ScanKey skey, BTArrayKeyInfo *array)
 		pfree(DatumGetPointer(skey->sk_argument));
 
 	/* NULL becomes new sk_argument/new current element */
-	skey->sk_argument = (Datum) 0;
+	skey->sk_argument = UndefinedDatum;
 	skey->sk_flags &= ~(SK_BT_MINVAL | SK_BT_MAXVAL |
 						SK_BT_NEXT | SK_BT_PRIOR);
 	skey->sk_flags |= (SK_SEARCHNULL | SK_ISNULL);
@@ -671,7 +671,7 @@ _bt_array_set_low_or_high(Relation rel, ScanKey skey, BTArrayKeyInfo *array,
 		pfree(DatumGetPointer(skey->sk_argument));
 
 	/* Reset flags */
-	skey->sk_argument = (Datum) 0;
+	skey->sk_argument = UndefinedDatum;
 	skey->sk_flags &= ~(SK_SEARCHNULL | SK_ISNULL |
 						SK_BT_MINVAL | SK_BT_MAXVAL |
 						SK_BT_NEXT | SK_BT_PRIOR);

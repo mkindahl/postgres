@@ -145,7 +145,7 @@ boolin(PG_FUNCTION_ARGS)
 	if (parse_bool_with_len(str, len, &result))
 		PG_RETURN_BOOL(result);
 
-	ereturn(fcinfo->context, (Datum) 0,
+	ereturn(fcinfo->context, UndefinedDatum,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"boolean", in_str)));

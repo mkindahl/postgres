@@ -123,7 +123,7 @@ InitializeRelfilenumberMap(void)
 
 	/* Watch for invalidation events. */
 	CacheRegisterRelcacheCallback(RelfilenumberMapInvalidateCallback,
-								  (Datum) 0);
+								  UndefinedDatum);
 }
 
 /*

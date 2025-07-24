@@ -512,7 +512,7 @@ injection_points_set_local(PG_FUNCTION_ARGS)
 	 * Register a before_shmem_exit callback to remove any injection points
 	 * linked to this process.
 	 */
-	before_shmem_exit(injection_points_cleanup, (Datum) 0);
+	before_shmem_exit(injection_points_cleanup, UndefinedDatum);
 
 	PG_RETURN_VOID();
 }
@@ -580,7 +580,7 @@ injection_points_list(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	return (Datum) 0;
+	return UndefinedDatum;
 #undef NUM_INJECTION_POINTS_LIST
 }
 

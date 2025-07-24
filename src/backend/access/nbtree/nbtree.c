@@ -608,7 +608,7 @@ btestimateparallelscan(Relation rel, int nkeys, int norderbys)
 	 * Pessimistically assume that all attributes prior to the least
 	 * significant attribute require a skip array (and an associated key)
 	 */
-	genericattrspace = datumEstimateSpace((Datum) 0, false, true,
+	genericattrspace = datumEstimateSpace(UndefinedDatum, false, true,
 										  sizeof(Datum));
 	for (int attnum = 1; attnum < nkeyatts; attnum++)
 	{
@@ -627,7 +627,8 @@ btestimateparallelscan(Relation rel, int nkeys, int norderbys)
 		if (attr->attbyval)
 		{
 			/* This index attribute stores pass-by-value datums */
-			Size		estfixed = datumEstimateSpace((Datum) 0, false,
+			Size		estfixed = datumEstimateSpace(UndefinedDatum,
+													  false,
 													  true, attr->attlen);
 
 			estnbtreeshared = add_size(estnbtreeshared, estfixed);
@@ -728,7 +729,7 @@ _bt_parallel_restore_arrays(Relation rel, BTParallelScanDesc btscan,
 		/* Restore skip array by restoring its key directly */
 		if (!array->attbyval && DatumGetPointer(skey->sk_argument) != NULL)
 			pfree(DatumGetPointer(skey->sk_argument));
-		skey->sk_argument = (Datum) 0;
+		skey->sk_argument = UndefinedDatum;
 		memcpy(&skey->sk_flags, datumshared, sizeof(int));
 		datumshared += sizeof(int);
 

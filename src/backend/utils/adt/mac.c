@@ -89,7 +89,7 @@ macaddr_in(PG_FUNCTION_ARGS)
 		count = sscanf(str, "%2x%2x%2x%2x%2x%2x%1s",
 					   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"", "macaddr",
 						str)));
@@ -97,7 +97,7 @@ macaddr_in(PG_FUNCTION_ARGS)
 	if ((a < 0) || (a > 255) || (b < 0) || (b > 255) ||
 		(c < 0) || (c > 255) || (d < 0) || (d > 255) ||
 		(e < 0) || (e > 255) || (f < 0) || (f > 255))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("invalid octet value in \"macaddr\" value: \"%s\"", str)));
 

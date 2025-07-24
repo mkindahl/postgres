@@ -1132,7 +1132,7 @@ spgDeformLeafTuple(SpGistLeafTuple tup, TupleDesc tupleDescriptor,
 		 */
 		Assert(!hasNullsMask);
 
-		datums[spgKeyColumn] = (Datum) 0;
+		datums[spgKeyColumn] = UndefinedDatum;
 		isnulls[spgKeyColumn] = true;
 		return;
 	}

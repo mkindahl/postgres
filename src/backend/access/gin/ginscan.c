@@ -148,7 +148,8 @@ ginScanKeyAddHiddenEntry(GinScanOpaque so, GinScanKey key,
 	/* strategy is of no interest because this is not a partial-match item */
 	key->scanEntry[i] = ginFillScanEntry(so, key->attnum,
 										 InvalidStrategy, key->searchMode,
-										 (Datum) 0, queryCategory,
+										 UndefinedDatum,
+										 queryCategory,
 										 false, NULL);
 }
 
@@ -417,7 +418,7 @@ ginNewScanKey(IndexScanDesc scan)
 		hasNullQuery = true;
 		ginFillScanKey(so, FirstOffsetNumber,
 					   InvalidStrategy, GIN_SEARCH_MODE_EVERYTHING,
-					   (Datum) 0, 0,
+					   UndefinedDatum, 0,
 					   NULL, NULL, NULL, NULL);
 	}
 

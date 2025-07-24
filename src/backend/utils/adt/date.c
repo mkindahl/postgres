@@ -163,7 +163,7 @@ date_in(PG_FUNCTION_ARGS)
 
 	/* Prevent overflow in Julian-day routines */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("date out of range: \"%s\"", str)));
 
@@ -171,7 +171,7 @@ date_in(PG_FUNCTION_ARGS)
 
 	/* Now check for just-out-of-range dates */
 	if (!IS_VALID_DATE(date))
-		ereturn(escontext, (Datum) 0,
+		ereturn(escontext, UndefinedDatum,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("date out of range: \"%s\"", str)));
 
@@ -472,7 +472,7 @@ date_decrement(Relation rel, Datum existing, bool *underflow)
 	{
 		/* return value is undefined */
 		*underflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*underflow = false;
@@ -488,7 +488,7 @@ date_increment(Relation rel, Datum existing, bool *overflow)
 	{
 		/* return value is undefined */
 		*overflow = true;
-		return (Datum) 0;
+		return UndefinedDatum;
 	}
 
 	*overflow = false;
