@@ -953,11 +953,11 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relrewrite - 1] = ObjectIdGetDatum(rd_rel->relrewrite);
 	values[Anum_pg_class_relfrozenxid - 1] = TransactionIdGetDatum(rd_rel->relfrozenxid);
 	values[Anum_pg_class_relminmxid - 1] = MultiXactIdGetDatum(rd_rel->relminmxid);
-	if (relacl != UndefinedDatum)
+	if (PointerIsValid(DatumGetPointer(relacl)))
 		values[Anum_pg_class_relacl - 1] = relacl;
 	else
 		nulls[Anum_pg_class_relacl - 1] = true;
-	if (reloptions != UndefinedDatum)
+	if (PointerIsValid(DatumGetPointer(reloptions)))
 		values[Anum_pg_class_reloptions - 1] = reloptions;
 	else
 		nulls[Anum_pg_class_reloptions - 1] = true;

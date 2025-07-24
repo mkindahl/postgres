@@ -1575,7 +1575,7 @@ parseLocalRelOptions(local_relopts *relopts, Datum options, bool validate)
 		i++;
 	}
 
-	if (options != UndefinedDatum)
+	if (PointerIsValid(DatumGetPointer(options)))
 		parseRelOptionsInternal(options, validate, values, nopts);
 
 	return values;
