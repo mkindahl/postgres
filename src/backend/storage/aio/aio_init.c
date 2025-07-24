@@ -235,5 +235,5 @@ pgaio_init_backend(void)
 	if (pgaio_method_ops->init_backend)
 		pgaio_method_ops->init_backend();
 
-	before_shmem_exit(pgaio_shutdown, 0);
+	before_shmem_exit(pgaio_shutdown, UndefinedDatum);
 }

@@ -227,7 +227,7 @@ PGReserveSemaphores(int maxSemas)
 	maxSems = maxSemas;
 	nextSemKey = statbuf.st_ino;
 
-	on_shmem_exit(ReleaseSemaphores, 0);
+	on_shmem_exit(ReleaseSemaphores, UndefinedDatum);
 }
 
 /*

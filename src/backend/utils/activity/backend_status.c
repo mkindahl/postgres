@@ -250,7 +250,7 @@ pgstat_beinit(void)
 	MyBEEntry = &BackendStatusArray[MyProcNumber];
 
 	/* Set up a process-exit hook to clean up */
-	on_shmem_exit(pgstat_beshutdown_hook, 0);
+	on_shmem_exit(pgstat_beshutdown_hook, UndefinedDatum);
 }
 
 

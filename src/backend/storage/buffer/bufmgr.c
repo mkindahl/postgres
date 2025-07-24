@@ -4028,7 +4028,7 @@ InitBufferManagerAccess(void)
 	 * the corresponding phase of backend shutdown.
 	 */
 	Assert(MyProc != NULL);
-	on_shmem_exit(AtProcExit_Buffers, 0);
+	on_shmem_exit(AtProcExit_Buffers, UndefinedDatum);
 }
 
 /*

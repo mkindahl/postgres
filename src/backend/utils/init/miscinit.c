@@ -1491,7 +1491,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	 * to the list of files to unlink.
 	 */
 	if (lock_files == NIL)
-		on_proc_exit(UnlinkLockFiles, 0);
+		on_proc_exit(UnlinkLockFiles, UndefinedDatum);
 
 	/*
 	 * Use lcons so that the lock files are unlinked in reverse order of

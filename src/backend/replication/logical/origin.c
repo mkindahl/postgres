@@ -1125,7 +1125,7 @@ replorigin_session_setup(RepOriginId node, int acquired_by)
 
 	if (!registered_cleanup)
 	{
-		on_shmem_exit(ReplicationOriginExitCleanup, 0);
+		on_shmem_exit(ReplicationOriginExitCleanup, UndefinedDatum);
 		registered_cleanup = true;
 	}
 

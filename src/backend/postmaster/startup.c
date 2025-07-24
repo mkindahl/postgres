@@ -221,7 +221,7 @@ StartupProcessMain(const void *startup_data, size_t startup_data_len)
 	AuxiliaryProcessMainCommon();
 
 	/* Arrange to clean up at startup process exit */
-	on_shmem_exit(StartupProcExit, 0);
+	on_shmem_exit(StartupProcExit, UndefinedDatum);
 
 	/*
 	 * Properly accept or ignore signals the postmaster might send us.

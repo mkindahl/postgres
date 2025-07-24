@@ -52,7 +52,7 @@ PGReserveSemaphores(int maxSemas)
 	numSems = 0;
 	maxSems = maxSemas;
 
-	on_shmem_exit(ReleaseSemaphores, 0);
+	on_shmem_exit(ReleaseSemaphores, UndefinedDatum);
 }
 
 /*

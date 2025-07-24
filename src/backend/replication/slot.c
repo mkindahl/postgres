@@ -240,7 +240,7 @@ ReplicationSlotsShmemInit(void)
 void
 ReplicationSlotInitialize(void)
 {
-	before_shmem_exit(ReplicationSlotShmemExit, 0);
+	before_shmem_exit(ReplicationSlotShmemExit, UndefinedDatum);
 }
 
 /*

@@ -4315,7 +4315,7 @@ PostgresMain(const char *dbname, const char *username)
 	 * sure Log_disconnections has its final value.
 	 */
 	if (IsUnderPostmaster && Log_disconnections)
-		on_proc_exit(log_disconnections, 0);
+		on_proc_exit(log_disconnections, UndefinedDatum);
 
 	pgstat_report_connect(MyDatabaseId);
 

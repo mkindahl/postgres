@@ -242,7 +242,7 @@ CheckpointerMain(const void *startup_data, size_t startup_data_len)
 	 * signal checkpointer to exit after all processes that could emit stats
 	 * have been shut down.
 	 */
-	before_shmem_exit(pgstat_before_server_shutdown, 0);
+	before_shmem_exit(pgstat_before_server_shutdown, UndefinedDatum);
 
 	/*
 	 * Create a memory context that we will do all our work in.  We do this so
@@ -612,7 +612,7 @@ CheckpointerMain(const void *startup_data, size_t startup_data_len)
 		 * out pending statistic.
 		 */
 		PendingCheckpointerStats.num_requested++;
-		ShutdownXLOG(0, 0);
+		ShutdownXLOG(0, UndefinedDatum);
 		pgstat_report_checkpointer();
 		pgstat_report_wal(true);
 

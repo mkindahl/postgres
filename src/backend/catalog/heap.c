@@ -3934,7 +3934,7 @@ StorePartitionKey(Relation rel,
 	pg_partitioned_table = table_open(PartitionedRelationId, RowExclusiveLock);
 
 	/* Only this can ever be NULL */
-	if (!partexprDatum)
+	if (DatumGetPointer(partexprDatum) == NULL)
 		nulls[Anum_pg_partitioned_table_partexprs - 1] = true;
 
 	values[Anum_pg_partitioned_table_partrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));

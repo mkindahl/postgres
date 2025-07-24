@@ -2602,7 +2602,7 @@ ExecJustAssignVarImpl(ExprState *state, TupleTableSlot *inslot, bool *isnull)
 	Assert(resultnum >= 0 && resultnum < outslot->tts_tupleDescriptor->natts);
 	outslot->tts_values[resultnum] =
 		slot_getattr(inslot, attnum, &outslot->tts_isnull[resultnum]);
-	return 0;
+	return UndefinedDatum;
 }
 
 /* Evaluate inner Var and assign to appropriate column of result tuple */
@@ -2736,7 +2736,7 @@ ExecJustAssignVarVirtImpl(ExprState *state, TupleTableSlot *inslot, bool *isnull
 	outslot->tts_values[resultnum] = inslot->tts_values[attnum];
 	outslot->tts_isnull[resultnum] = inslot->tts_isnull[attnum];
 
-	return 0;
+	return UndefinedDatum;
 }
 
 /* Like ExecJustAssignInnerVar, optimized for virtual slots */

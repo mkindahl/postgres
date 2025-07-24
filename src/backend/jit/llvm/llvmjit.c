@@ -900,7 +900,7 @@ llvm_session_initialize(void)
 		opt3_tm = 0;
 	}
 
-	on_proc_exit(llvm_shutdown, 0);
+	on_proc_exit(llvm_shutdown, UndefinedDatum);
 
 	llvm_session_initialized = true;
 

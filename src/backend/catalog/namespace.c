@@ -4522,7 +4522,8 @@ AtEOXact_Namespace(bool isCommit, bool parallel)
 	if (myTempNamespaceSubID != InvalidSubTransactionId && !parallel)
 	{
 		if (isCommit)
-			before_shmem_exit(RemoveTempRelationsCallback, 0);
+			before_shmem_exit(RemoveTempRelationsCallback,
+					  UndefinedDatum);
 		else
 		{
 			myTempNamespace = InvalidOid;

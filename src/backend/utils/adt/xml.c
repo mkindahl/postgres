@@ -293,7 +293,7 @@ xml_in(PG_FUNCTION_ARGS)
 	PG_RETURN_XML_P(vardata);
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif
 }
 
@@ -429,7 +429,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	PG_RETURN_XML_P(result);
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif
 }
 
@@ -518,7 +518,7 @@ xmlcomment(PG_FUNCTION_ARGS)
 	PG_RETURN_XML_P(stringinfo_to_xmltype(&buf));
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif
 }
 
@@ -562,7 +562,7 @@ xmltext(PG_FUNCTION_ARGS)
 	PG_RETURN_XML_P(result);
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif							/* not USE_LIBXML */
 }
 
@@ -4343,7 +4343,7 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 		default:
 			elog(ERROR, "xpath expression result type %d is unsupported",
 				 xpathobj->type);
-			return 0;			/* keep compiler quiet */
+			return UndefinedDatum;			/* keep compiler quiet */
 	}
 
 	/* Common code for scalar-value cases */
@@ -4578,7 +4578,7 @@ xpath(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif
 }
 
@@ -4600,7 +4600,7 @@ xmlexists(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(res_nitems > 0);
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif
 }
 
@@ -4624,7 +4624,7 @@ xpath_exists(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(res_nitems > 0);
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif
 }
 
@@ -4660,7 +4660,7 @@ xml_is_well_formed(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(wellformed_xml(data, xmloption));
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif							/* not USE_LIBXML */
 }
 
@@ -4673,7 +4673,7 @@ xml_is_well_formed_document(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(wellformed_xml(data, XMLOPTION_DOCUMENT));
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif							/* not USE_LIBXML */
 }
 
@@ -4686,7 +4686,7 @@ xml_is_well_formed_content(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(wellformed_xml(data, XMLOPTION_CONTENT));
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif							/* not USE_LIBXML */
 }
 
@@ -5113,7 +5113,7 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 	return result;
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return UndefinedDatum;
 #endif							/* not USE_LIBXML */
 }
 

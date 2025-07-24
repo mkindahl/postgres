@@ -82,7 +82,7 @@ AuxiliaryProcessMainCommon(void)
 	pgstat_bestart_final();
 
 	/* register a before-shutdown callback for LWLock cleanup */
-	before_shmem_exit(ShutdownAuxiliaryProcess, 0);
+	before_shmem_exit(ShutdownAuxiliaryProcess, UndefinedDatum);
 
 	SetProcessingMode(NormalProcessing);
 }

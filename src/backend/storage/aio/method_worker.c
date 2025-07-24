@@ -358,7 +358,7 @@ pgaio_worker_register(void)
 	io_worker_control->workers[MyIoWorkerId].latch = MyLatch;
 	LWLockRelease(AioWorkerSubmissionQueueLock);
 
-	on_shmem_exit(pgaio_worker_die, 0);
+	on_shmem_exit(pgaio_worker_die, UndefinedDatum);
 }
 
 static void

@@ -379,7 +379,7 @@ MarkAsPreparing(FullTransactionId fxid, const char *gid,
 	/* on first call, register the exit hook */
 	if (!twophaseExitRegistered)
 	{
-		before_shmem_exit(AtProcExit_Twophase, 0);
+		before_shmem_exit(AtProcExit_Twophase, UndefinedDatum);
 		twophaseExitRegistered = true;
 	}
 
@@ -559,7 +559,7 @@ LockGXact(const char *gid, Oid user)
 	/* on first call, register the exit hook */
 	if (!twophaseExitRegistered)
 	{
-		before_shmem_exit(AtProcExit_Twophase, 0);
+		before_shmem_exit(AtProcExit_Twophase, UndefinedDatum);
 		twophaseExitRegistered = true;
 	}
 

@@ -200,7 +200,7 @@ smgrinit(void)
 	RESUME_INTERRUPTS();
 
 	/* register the shutdown proc */
-	on_proc_exit(smgrshutdown, 0);
+	on_proc_exit(smgrshutdown, UndefinedDatum);
 }
 
 /*

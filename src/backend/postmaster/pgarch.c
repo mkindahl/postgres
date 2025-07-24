@@ -245,7 +245,7 @@ PgArchiverMain(const void *startup_data, size_t startup_data_len)
 	Assert(XLogArchivingActive());
 
 	/* Arrange to clean up at archiver exit */
-	on_shmem_exit(pgarch_die, 0);
+	on_shmem_exit(pgarch_die, UndefinedDatum);
 
 	/*
 	 * Advertise our proc number so that backends can use our latch to wake us
@@ -945,7 +945,7 @@ LoadArchiveLibrary(void)
 	if (ArchiveCallbacks->startup_cb != NULL)
 		ArchiveCallbacks->startup_cb(archive_module_state);
 
-	before_shmem_exit(pgarch_call_module_shutdown_cb, 0);
+	before_shmem_exit(pgarch_call_module_shutdown_cb, UndefinedDatum);
 }
 
 /*

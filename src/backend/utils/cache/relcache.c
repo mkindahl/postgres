@@ -6009,7 +6009,7 @@ RelationGetIndexAttOptions(Relation relation, bool copy)
 
 			opts[i] = index_opclass_options(relation, i + 1, attoptions, false);
 
-			if (attoptions != UndefinedDatum)
+			if (PointerIsValid(DatumGetPointer(attoptions)))
 				pfree(DatumGetPointer(attoptions));
 		}
 	}

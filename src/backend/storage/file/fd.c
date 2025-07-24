@@ -936,7 +936,7 @@ InitTemporaryFileAccess(void)
 	 * Register before-shmem-exit hook to ensure temp files are dropped while
 	 * we can still report stats.
 	 */
-	before_shmem_exit(BeforeShmemExit_Files, 0);
+	before_shmem_exit(BeforeShmemExit_Files, UndefinedDatum);
 
 #ifdef USE_ASSERT_CHECKING
 	temporary_files_allowed = true;

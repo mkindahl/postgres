@@ -654,10 +654,10 @@ UpdateIndexRelation(Oid indexoid,
 	values[Anum_pg_index_indclass - 1] = PointerGetDatum(indclass);
 	values[Anum_pg_index_indoption - 1] = PointerGetDatum(indoption);
 	values[Anum_pg_index_indexprs - 1] = exprsDatum;
-	if (exprsDatum == UndefinedDatum)
+	if (DatumGetPointer(exprsDatum) == NULL)
 		nulls[Anum_pg_index_indexprs - 1] = true;
 	values[Anum_pg_index_indpred - 1] = predDatum;
-	if (predDatum == UndefinedDatum)
+	if (DatumGetPointer(predDatum) == NULL)
 		nulls[Anum_pg_index_indpred - 1] = true;
 
 	tuple = heap_form_tuple(RelationGetDescr(pg_index), values, nulls);

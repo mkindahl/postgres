@@ -517,5 +517,5 @@ sepgsql_avc_init(void)
 				(errmsg("SELinux: kernel status page uses fallback mode")));
 
 	/* Arrange to close selinux status page on process exit. */
-	on_proc_exit(sepgsql_avc_exit, 0);
+	on_proc_exit(sepgsql_avc_exit, UndefinedDatum);
 }

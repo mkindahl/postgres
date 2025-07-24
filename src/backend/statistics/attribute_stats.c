@@ -404,7 +404,8 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 			set_stats_slot(values, nulls, replaces,
 						   STATISTIC_KIND_HISTOGRAM,
 						   lt_opr, atttypcoll,
-						   0, true, stavalues, false);
+						   UndefinedDatum, true,
+						   stavalues, false);
 		}
 		else
 			result = false;
@@ -420,7 +421,8 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 		set_stats_slot(values, nulls, replaces,
 					   STATISTIC_KIND_CORRELATION,
 					   lt_opr, atttypcoll,
-					   stanumbers, false, 0, true);
+					   stanumbers, false, UndefinedDatum,
+					   true);
 	}
 
 	/* STATISTIC_KIND_MCELEM */
@@ -455,7 +457,8 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 		set_stats_slot(values, nulls, replaces,
 					   STATISTIC_KIND_DECHIST,
 					   elem_eq_opr, atttypcoll,
-					   stanumbers, false, 0, true);
+					   stanumbers, false, UndefinedDatum,
+					   true);
 	}
 
 	/*
@@ -481,7 +484,8 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 			set_stats_slot(values, nulls, replaces,
 						   STATISTIC_KIND_BOUNDS_HISTOGRAM,
 						   InvalidOid, InvalidOid,
-						   0, true, stavalues, false);
+						   UndefinedDatum, true,
+						   stavalues, false);
 		}
 		else
 			result = false;

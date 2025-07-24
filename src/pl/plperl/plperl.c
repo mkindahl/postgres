@@ -617,7 +617,7 @@ select_perl_context(bool trusted)
 			plperl_untrusted_init();
 
 		/* successfully initialized, so arrange for cleanup */
-		on_proc_exit(plperl_fini, 0);
+		on_proc_exit(plperl_fini, UndefinedDatum);
 	}
 	else
 	{

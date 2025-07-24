@@ -1551,7 +1551,7 @@ AutoVacWorkerMain(const void *startup_data, size_t startup_data_len)
 		AutoVacuumShmem->av_startingWorker = NULL;
 		LWLockRelease(AutovacuumLock);
 
-		on_shmem_exit(FreeWorkerInfo, 0);
+		on_shmem_exit(FreeWorkerInfo, UndefinedDatum);
 
 		/* wake up the launcher */
 		if (AutoVacuumShmem->av_launcherpid != 0)

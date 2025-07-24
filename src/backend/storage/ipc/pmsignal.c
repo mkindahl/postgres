@@ -297,7 +297,7 @@ RegisterPostmasterChildActive(void)
 	PMSignalState->PMChildFlags[slot] = PM_CHILD_ACTIVE;
 
 	/* Arrange to clean up at exit. */
-	on_shmem_exit(MarkPostmasterChildInactive, 0);
+	on_shmem_exit(MarkPostmasterChildInactive, UndefinedDatum);
 }
 
 /*

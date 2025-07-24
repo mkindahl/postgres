@@ -187,7 +187,7 @@ autoprewarm_main(Datum main_arg)
 	 * are detached before calling the on_shmem_exit callbacks, so we must put
 	 * apw_detach_shmem in the before_shmem_exit callback list.
 	 */
-	before_shmem_exit(apw_detach_shmem, 0);
+	before_shmem_exit(apw_detach_shmem, UndefinedDatum);
 
 	/*
 	 * Store our PID in the shared memory area --- unless there's already

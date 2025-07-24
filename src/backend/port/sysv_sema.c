@@ -361,7 +361,7 @@ PGReserveSemaphores(int maxSemas)
 	nextSemaKey = statbuf.st_ino;
 	nextSemaNumber = SEMAS_PER_SET; /* force sema set alloc on 1st call */
 
-	on_shmem_exit(ReleaseSemaphores, 0);
+	on_shmem_exit(ReleaseSemaphores, UndefinedDatum);
 }
 
 /*

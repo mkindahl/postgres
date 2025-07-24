@@ -3057,7 +3057,7 @@ InitWalSenderSlot(void)
 	Assert(MyWalSnd != NULL);
 
 	/* Arrange to clean up at walsender exit */
-	on_shmem_exit(WalSndKill, 0);
+	on_shmem_exit(WalSndKill, UndefinedDatum);
 }
 
 /* Destroy the per-walsender data structure for this walsender process */

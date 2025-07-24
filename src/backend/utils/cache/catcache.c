@@ -919,7 +919,7 @@ InitCatCache(int id,
 		CacheHdr->ch_ntup = 0;
 #ifdef CATCACHE_STATS
 		/* set up to dump stats at backend exit */
-		on_proc_exit(CatCachePrintStats, 0);
+		on_proc_exit(CatCachePrintStats, UndefinedDatum);
 #endif
 	}
 

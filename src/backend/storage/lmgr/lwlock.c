@@ -307,7 +307,7 @@ init_lwlock_stats(void)
 									HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	if (!exit_registered)
 	{
-		on_shmem_exit(print_lwlock_stats, 0);
+		on_shmem_exit(print_lwlock_stats, UndefinedDatum);
 		exit_registered = true;
 	}
 }

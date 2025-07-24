@@ -793,8 +793,9 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		 * Use before_shmem_exit() so that ShutdownXLOG() can rely on DSM
 		 * segments etc to work (which in turn is required for pgstats).
 		 */
-		before_shmem_exit(pgstat_before_server_shutdown, 0);
-		before_shmem_exit(ShutdownXLOG, 0);
+		before_shmem_exit(pgstat_before_server_shutdown,
+				  UndefinedDatum);
+		before_shmem_exit(ShutdownXLOG, UndefinedDatum);
 	}
 
 	/*
@@ -825,7 +826,7 @@ InitPostgres(const char *in_dbname, Oid dboid,
 	 * initialization transaction, as is entirely possible, we need the
 	 * AbortTransaction call to clean up.
 	 */
-	before_shmem_exit(ShutdownPostgres, 0);
+	before_shmem_exit(ShutdownPostgres, UndefinedDatum);
 
 	/* The autovacuum launcher is done here */
 	if (AmAutoVacuumLauncherProcess())

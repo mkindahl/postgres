@@ -283,7 +283,7 @@ pq_init(ClientSocket *client_sock)
 	PqCommReadingMsg = false;
 
 	/* set up process-exit hook to close the socket */
-	on_proc_exit(socket_close, 0);
+	on_proc_exit(socket_close, UndefinedDatum);
 
 	/*
 	 * In backends (as soon as forked) we operate the underlying socket in

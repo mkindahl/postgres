@@ -657,7 +657,7 @@ pgstat_initialize(void)
 	}
 
 	/* Set up a process-exit hook to clean up */
-	before_shmem_exit(pgstat_shutdown_hook, 0);
+	before_shmem_exit(pgstat_shutdown_hook, UndefinedDatum);
 
 #ifdef USE_ASSERT_CHECKING
 	pgstat_is_initialized = true;
