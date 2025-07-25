@@ -4231,7 +4231,7 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 	bool		strictfunc = op->d.hashedscalararrayop.finfo->fn_strict;
 	Datum		scalar = fcinfo->args[0].value;
 	bool		scalar_isnull = fcinfo->args[0].isnull;
-	Datum		result;
+	bool   		result;
 	bool		resultnull;
 	bool		hashfound;
 
@@ -4347,9 +4347,9 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 
 	/* the result depends on if the clause is an IN or NOT IN clause */
 	if (inclause)
-		result = BoolGetDatum(hashfound);	/* IN */
+		result = hashfound;	/* IN */
 	else
-		result = BoolGetDatum(!hashfound);	/* NOT IN */
+		result = !hashfound;	/* NOT IN */
 
 	resultnull = false;
 
@@ -4385,7 +4385,7 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 			fcinfo->args[1].value = (Datum) 0;
 			fcinfo->args[1].isnull = true;
 
-			result = op->d.hashedscalararrayop.finfo->fn_addr(fcinfo);
+			result = DatumGetBool(op->d.hashedscalararrayop.finfo->fn_addr(fcinfo));
 			resultnull = fcinfo->isnull;
 
 			/*
@@ -4397,7 +4397,7 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 		}
 	}
 
-	*op->resvalue = result;
+	*op->resvalue = BoolGetDatum(result);
 	*op->resnull = resultnull;
 }
 
