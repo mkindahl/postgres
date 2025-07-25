@@ -803,7 +803,7 @@ statext_store(Oid statOid, bool inh,
 		nulls[Anum_pg_statistic_ext_data_stxdmcv - 1] = (data == NULL);
 		values[Anum_pg_statistic_ext_data_stxdmcv - 1] = PointerGetDatum(data);
 	}
-	if (exprs != (Datum) 0)
+	if (pg_cmp_datum(exprs, (Datum)0) != 0)
 	{
 		nulls[Anum_pg_statistic_ext_data_stxdexpr - 1] = false;
 		values[Anum_pg_statistic_ext_data_stxdexpr - 1] = exprs;

@@ -1769,9 +1769,9 @@ varstrfastcmp_c(Datum x, Datum y, SortSupport ssup)
 		result = (len1 < len2) ? -1 : 1;
 
 	/* We can't afford to leak memory here. */
-	if (PointerGetDatum(arg1) != x)
+	if (arg1 != DatumGetVoidPointer(x))
 		pfree(arg1);
-	if (PointerGetDatum(arg2) != y)
+	if (arg2 != DatumGetVoidPointer(y))
 		pfree(arg2);
 
 	return result;
@@ -1806,9 +1806,9 @@ bpcharfastcmp_c(Datum x, Datum y, SortSupport ssup)
 		result = (len1 < len2) ? -1 : 1;
 
 	/* We can't afford to leak memory here. */
-	if (PointerGetDatum(arg1) != x)
+	if (arg1 != DatumGetVoidPointer(x))
 		pfree(arg1);
-	if (PointerGetDatum(arg2) != y)
+	if (arg2 != DatumGetVoidPointer(y))
 		pfree(arg2);
 
 	return result;
@@ -1849,9 +1849,9 @@ varlenafastcmp_locale(Datum x, Datum y, SortSupport ssup)
 	result = varstrfastcmp_locale(a1p, len1, a2p, len2, ssup);
 
 	/* We can't afford to leak memory here. */
-	if (PointerGetDatum(arg1) != x)
+	if (arg1 != DatumGetVoidPointer(x))
 		pfree(arg1);
-	if (PointerGetDatum(arg2) != y)
+	if (arg2 != DatumGetVoidPointer(y))
 		pfree(arg2);
 
 	return result;
@@ -2155,7 +2155,7 @@ done:
 	res = DatumBigEndianToNative(res);
 
 	/* Don't leak memory here */
-	if (PointerGetDatum(authoritative) != original)
+	if (authoritative != DatumGetVoidPointer(original))
 		pfree(authoritative);
 
 	return res;

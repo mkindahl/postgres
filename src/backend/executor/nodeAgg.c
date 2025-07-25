@@ -891,7 +891,7 @@ process_ordered_aggregate_single(AggState *aggstate,
 			haveOldVal &&
 			((oldIsNull && *isNull) ||
 			 (!oldIsNull && !*isNull &&
-			  oldAbbrevVal == newAbbrevVal &&
+			  pg_cmp_datum(oldAbbrevVal, newAbbrevVal) == 0 &&
 			  DatumGetBool(FunctionCall2Coll(&pertrans->equalfnOne,
 											 pertrans->aggCollation,
 											 oldVal, *newVal)))))
@@ -977,7 +977,7 @@ process_ordered_aggregate_multi(AggState *aggstate,
 
 		if (numDistinctCols == 0 ||
 			!haveOldValue ||
-			newAbbrevVal != oldAbbrevVal ||
+			pg_cmp_datum(newAbbrevVal, oldAbbrevVal) != 0 ||
 			!ExecQual(pertrans->equalfnMulti, tmpcontext))
 		{
 			/*

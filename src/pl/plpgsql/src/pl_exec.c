@@ -5148,7 +5148,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * promise in any case --- otherwise, assigning null to an
 				 * armed promise variable would fail to disarm the promise.
 				 */
-				if (var->value != newvalue || var->isnull || isNull)
+				if (pg_cmp_datum(var->value, newvalue) != 0 || var->isnull || isNull)
 					assign_simple_var(estate, var, newvalue, isNull,
 									  (!var->datatype->typbyval && !isNull));
 				else

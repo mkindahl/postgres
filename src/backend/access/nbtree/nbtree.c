@@ -726,7 +726,7 @@ _bt_parallel_restore_arrays(Relation rel, BTParallelScanDesc btscan,
 		}
 
 		/* Restore skip array by restoring its key directly */
-		if (!array->attbyval && skey->sk_argument)
+		if (!array->attbyval && DatumGetPointer(skey->sk_argument) != NULL)
 			pfree(DatumGetPointer(skey->sk_argument));
 		skey->sk_argument = (Datum) 0;
 		memcpy(&skey->sk_flags, datumshared, sizeof(int));

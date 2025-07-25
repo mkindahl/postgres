@@ -54,6 +54,7 @@
 
 #include "access/attnum.h"
 #include "utils/relcache.h"
+#include "common/int.h"
 
 typedef struct SortSupportData *SortSupport;
 
@@ -254,7 +255,7 @@ ApplyUnsignedSortComparator(Datum datum1, bool isNull1,
 	}
 	else
 	{
-		compare = datum1 < datum2 ? -1 : datum1 > datum2 ? 1 : 0;
+		compare = pg_cmp_datum(datum1, datum2);
 		if (ssup->ssup_reverse)
 			INVERT_COMPARE_RESULT(compare);
 	}

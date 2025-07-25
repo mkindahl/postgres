@@ -396,7 +396,7 @@ cancel_before_shmem_exit(pg_on_exit_callback function, Datum arg)
 	if (before_shmem_exit_index > 0 &&
 		before_shmem_exit_list[before_shmem_exit_index - 1].function
 		== function &&
-		before_shmem_exit_list[before_shmem_exit_index - 1].arg == arg)
+		pg_cmp_datum(before_shmem_exit_list[before_shmem_exit_index - 1].arg, arg) == 0)
 		--before_shmem_exit_index;
 	else
 		elog(ERROR, "before_shmem_exit callback (%p,0x%" PRIx64 ") is not the latest entry",

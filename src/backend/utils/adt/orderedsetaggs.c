@@ -1090,7 +1090,7 @@ mode_final(PG_FUNCTION_ARGS)
 			last_val_is_mode = true;
 			last_abbrev_val = abbrev_val;
 		}
-		else if (abbrev_val == last_abbrev_val &&
+		else if (pg_cmp_datum(abbrev_val, last_abbrev_val) == 0 &&
 				 DatumGetBool(FunctionCall2Coll(equalfn, PG_GET_COLLATION(), val, last_val)))
 		{
 			/* value equal to previous value, count it */
@@ -1404,7 +1404,7 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 		econtext->ecxt_innertuple = slot2;
 
 		if (!TupIsNull(slot2) &&
-			abbrevVal == abbrevOld &&
+			pg_cmp_datum(abbrevVal, abbrevOld) == 0 &&
 			ExecQualAndReset(compareTuple, econtext))
 			duplicate_count++;
 

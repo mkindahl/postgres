@@ -1219,7 +1219,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		 * to avoid leaking memory across repeated calls, we have to remember
 		 * the latest value, much as for curTuple above.
 		 */
-		if (node->curArray != PointerGetDatum(NULL))
+		if (DatumGetPointer(node->curArray) != NULL)
 			pfree(DatumGetPointer(node->curArray));
 		node->curArray = makeArrayResultAny(astate,
 											econtext->ecxt_per_query_memory,

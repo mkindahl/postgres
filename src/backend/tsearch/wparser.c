@@ -116,7 +116,7 @@ ts_token_type_byid(PG_FUNCTION_ARGS)
 
 	funcctx = SRF_PERCALL_SETUP();
 
-	if ((result = tt_process_call(funcctx)) != (Datum) 0)
+	if (pg_cmp_datum((result = tt_process_call(funcctx)), (Datum)0) != 0)
 		SRF_RETURN_NEXT(funcctx, result);
 	SRF_RETURN_DONE(funcctx);
 }
@@ -139,7 +139,7 @@ ts_token_type_byname(PG_FUNCTION_ARGS)
 
 	funcctx = SRF_PERCALL_SETUP();
 
-	if ((result = tt_process_call(funcctx)) != (Datum) 0)
+	if (pg_cmp_datum((result = tt_process_call(funcctx)), (Datum)0) != 0)
 		SRF_RETURN_NEXT(funcctx, result);
 	SRF_RETURN_DONE(funcctx);
 }

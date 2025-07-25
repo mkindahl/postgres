@@ -285,7 +285,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		}
 
 		/* If the vector was toasted, free the detoasted copy. */
-		if (TSVectorGetDatum(vector) != value)
+		if (DatumGetPointer(TSVectorGetDatum(vector)) != DatumGetPointer(value))
 			pfree(vector);
 	}
 

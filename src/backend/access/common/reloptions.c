@@ -2019,7 +2019,7 @@ build_local_reloptions(local_relopts *relopts, Datum options, bool validate)
 bytea *
 partitioned_table_reloptions(Datum reloptions, bool validate)
 {
-	if (validate && reloptions)
+	if (validate && DatumGetPointer(reloptions) != NULL)
 		ereport(ERROR,
 				errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				errmsg("cannot specify storage parameters for a partitioned table"),

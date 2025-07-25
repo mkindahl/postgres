@@ -997,7 +997,7 @@ UnregisterExprContextCallback(ExprContext *econtext,
 
 	while ((ecxt_callback = *prev_callback) != NULL)
 	{
-		if (ecxt_callback->function == function && ecxt_callback->arg == arg)
+		if (ecxt_callback->function == function && pg_cmp_datum(ecxt_callback->arg, arg) == 0)
 		{
 			*prev_callback = ecxt_callback->next;
 			pfree(ecxt_callback);

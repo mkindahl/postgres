@@ -1531,7 +1531,7 @@ get_func_input_arg_names(Datum proargnames, Datum proargmodes,
 	int			i;
 
 	/* Do nothing if null proargnames */
-	if (proargnames == PointerGetDatum(NULL))
+	if (DatumGetPointer(proargnames) == NULL)
 	{
 		*arg_names = NULL;
 		return 0;
@@ -1548,7 +1548,7 @@ get_func_input_arg_names(Datum proargnames, Datum proargmodes,
 		ARR_ELEMTYPE(arr) != TEXTOID)
 		elog(ERROR, "proargnames is not a 1-D text array or it contains nulls");
 	deconstruct_array_builtin(arr, TEXTOID, &argnames, NULL, &numargs);
-	if (proargmodes != PointerGetDatum(NULL))
+	if (DatumGetPointer(proargmodes) != NULL)
 	{
 		arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
 		if (ARR_NDIM(arr) != 1 ||
@@ -1766,8 +1766,8 @@ build_function_result_tupdesc_d(char prokind,
 	int			i;
 
 	/* Can't have output args if columns are null */
-	if (proallargtypes == PointerGetDatum(NULL) ||
-		proargmodes == PointerGetDatum(NULL))
+	if (DatumGetPointer(proallargtypes) == NULL ||
+		DatumGetPointer(proargmodes) == NULL)
 		return NULL;
 
 	/*
@@ -1791,7 +1791,7 @@ build_function_result_tupdesc_d(char prokind,
 		elog(ERROR, "proargmodes is not a 1-D char array of length %d or it contains nulls",
 			 numargs);
 	argmodes = (char *) ARR_DATA_PTR(arr);
-	if (proargnames != PointerGetDatum(NULL))
+	if (DatumGetPointer(proargnames) != NULL)
 	{
 		arr = DatumGetArrayTypeP(proargnames);	/* ensure not toasted */
 		if (ARR_NDIM(arr) != 1 ||

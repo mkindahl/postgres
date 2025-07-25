@@ -44,6 +44,7 @@
 
 #include "access/detoast.h"
 #include "common/hashfn.h"
+#include "common/int.h"
 #include "fmgr.h"
 #include "utils/datum.h"
 #include "utils/expandeddatum.h"
@@ -232,7 +233,7 @@ datumIsEqual(Datum value1, Datum value2, bool typByVal, int typLen)
 		 * inside the "Datum".  We assume instead that any given datatype is
 		 * consistent about how it fills extraneous bits in the Datum.
 		 */
-		res = (value1 == value2);
+		res = (pg_cmp_datum(value1, value2) == 0);
 	}
 	else
 	{
@@ -271,7 +272,7 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 
 	if (typByVal)
 	{
-		result = (value1 == value2);
+		result = (pg_cmp_datum(value1, value2) == 0);
 	}
 	else if (typLen > 0)
 	{

@@ -1257,7 +1257,7 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 											t_sql,
 											CStringGetTextDatum("@extschema@"),
 											CStringGetTextDatum(qSchemaName));
-			if (t_sql != old && strpbrk(schemaName, quoting_relevant_chars))
+			if (pg_cmp_datum(t_sql, old) != 0 && strpbrk(schemaName, quoting_relevant_chars))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid character in extension \"%s\" schema: must not contain any of \"%s\"",
@@ -1284,7 +1284,7 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 											t_sql,
 											CStringGetTextDatum(repltoken),
 											CStringGetTextDatum(qSchemaName));
-			if (t_sql != old && strpbrk(schemaName, quoting_relevant_chars))
+			if (pg_cmp_datum(t_sql, old) != 0 && strpbrk(schemaName, quoting_relevant_chars))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid character in extension \"%s\" schema: must not contain any of \"%s\"",
@@ -2093,12 +2093,12 @@ InsertExtensionTuple(const char *extName, Oid extOwner,
 	values[Anum_pg_extension_extrelocatable - 1] = BoolGetDatum(relocatable);
 	values[Anum_pg_extension_extversion - 1] = CStringGetTextDatum(extVersion);
 
-	if (extConfig == PointerGetDatum(NULL))
+	if (DatumGetPointer(extConfig) == NULL)
 		nulls[Anum_pg_extension_extconfig - 1] = true;
 	else
 		values[Anum_pg_extension_extconfig - 1] = extConfig;
 
-	if (extCondition == PointerGetDatum(NULL))
+	if (DatumGetPointer(extCondition) == NULL)
 		nulls[Anum_pg_extension_extcondition - 1] = true;
 	else
 		values[Anum_pg_extension_extcondition - 1] = extCondition;

@@ -411,7 +411,7 @@ calc_arraycontsel(VariableStatData *vardata, Datum constval,
 	}
 
 	/* If constant was toasted, release the copy we made */
-	if (PointerGetDatum(array) != constval)
+	if (array != DatumGetVoidPointer(constval))
 		pfree(array);
 
 	return selec;

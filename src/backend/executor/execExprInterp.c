@@ -5670,7 +5670,7 @@ ExecAggCopyTransValue(AggState *aggstate, AggStatePerTrans pertrans,
 					  Datum newValue, bool newValueIsNull,
 					  Datum oldValue, bool oldValueIsNull)
 {
-	Assert(newValue != oldValue);
+	Assert(pg_cmp_datum(newValue, oldValue) != 0);
 
 	if (!newValueIsNull)
 	{

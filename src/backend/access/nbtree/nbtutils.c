@@ -571,7 +571,7 @@ _bt_skiparray_set_element(Relation rel, ScanKey skey, BTArrayKeyInfo *array,
 	}
 
 	/* Free memory previously allocated for sk_argument if needed */
-	if (!array->attbyval && skey->sk_argument)
+	if (!array->attbyval && DatumGetPointer(skey->sk_argument) != NULL)
 		pfree(DatumGetPointer(skey->sk_argument));
 
 	/* tupdatum becomes new sk_argument/new current element */
@@ -592,7 +592,7 @@ _bt_skiparray_set_isnull(Relation rel, ScanKey skey, BTArrayKeyInfo *array)
 	Assert(array->null_elem && !array->low_compare && !array->high_compare);
 
 	/* Free memory previously allocated for sk_argument if needed */
-	if (!array->attbyval && skey->sk_argument)
+	if (!array->attbyval && DatumGetPointer(skey->sk_argument) != NULL)
 		pfree(DatumGetPointer(skey->sk_argument));
 
 	/* NULL becomes new sk_argument/new current element */
@@ -667,7 +667,7 @@ _bt_array_set_low_or_high(Relation rel, ScanKey skey, BTArrayKeyInfo *array,
 	Assert(array->num_elems == -1);
 
 	/* Free memory previously allocated for sk_argument if needed */
-	if (!array->attbyval && skey->sk_argument)
+	if (!array->attbyval && DatumGetPointer(skey->sk_argument) != NULL)
 		pfree(DatumGetPointer(skey->sk_argument));
 
 	/* Reset flags */
@@ -819,7 +819,7 @@ _bt_array_decrement(Relation rel, ScanKey skey, BTArrayKeyInfo *array)
 	}
 
 	/* Accept value returned by opclass decrement callback */
-	if (!array->attbyval && skey->sk_argument)
+	if (!array->attbyval && DatumGetPointer(skey->sk_argument) != NULL)
 		pfree(DatumGetPointer(skey->sk_argument));
 	skey->sk_argument = dec_sk_argument;
 
@@ -952,7 +952,7 @@ _bt_array_increment(Relation rel, ScanKey skey, BTArrayKeyInfo *array)
 	}
 
 	/* Accept value returned by opclass increment callback */
-	if (!array->attbyval && skey->sk_argument)
+	if (!array->attbyval && DatumGetPointer(skey->sk_argument) != NULL)
 		pfree(DatumGetPointer(skey->sk_argument));
 	skey->sk_argument = inc_sk_argument;
 
