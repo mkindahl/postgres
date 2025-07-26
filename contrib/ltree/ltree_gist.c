@@ -115,7 +115,7 @@ ltree_decompress(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	ltree_gist *key = (ltree_gist *) PG_DETOAST_DATUM(entry->key);
 
-	if (PointerGetDatum(key) != entry->key)
+	if (key != DatumGetVoidPointer(entry->key))
 	{
 		GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 
