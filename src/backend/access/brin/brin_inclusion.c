@@ -229,7 +229,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	{
 		pfree(DatumGetPointer(column->bv_values[INCLUSION_UNION]));
 
-		if (result == newval)
+		if (DatumGetVoidPointer(result) == DatumGetVoidPointer(newval))
 			result = datumCopy(result, attr->attbyval, attr->attlen);
 	}
 	column->bv_values[INCLUSION_UNION] = result;
@@ -525,7 +525,7 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	{
 		pfree(DatumGetPointer(col_a->bv_values[INCLUSION_UNION]));
 
-		if (result == col_b->bv_values[INCLUSION_UNION])
+		if (DatumGetPointer(result) == DatumGetPointer(col_b->bv_values[INCLUSION_UNION]))
 			result = datumCopy(result, attr->attbyval, attr->attlen);
 	}
 	col_a->bv_values[INCLUSION_UNION] = result;

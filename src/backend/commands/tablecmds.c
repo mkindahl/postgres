@@ -9060,7 +9060,7 @@ ATExecSetOptions(Relation rel, const char *colName, Node *options,
 	/* Build new tuple. */
 	memset(repl_null, false, sizeof(repl_null));
 	memset(repl_repl, false, sizeof(repl_repl));
-	if (newOptions != UndefinedDatum)
+	if (DatumGetPointer(newOptions) != NULL)
 		repl_val[Anum_pg_attribute_attoptions - 1] = newOptions;
 	else
 		repl_null[Anum_pg_attribute_attoptions - 1] = true;
@@ -16725,7 +16725,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 	memset(repl_null, false, sizeof(repl_null));
 	memset(repl_repl, false, sizeof(repl_repl));
 
-	if (newOptions != UndefinedDatum)
+	if (DatumGetPointer(newOptions) != NULL)
 		repl_val[Anum_pg_class_reloptions - 1] = newOptions;
 	else
 		repl_null[Anum_pg_class_reloptions - 1] = true;
@@ -16785,7 +16785,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		memset(repl_null, false, sizeof(repl_null));
 		memset(repl_repl, false, sizeof(repl_repl));
 
-		if (newOptions != UndefinedDatum)
+		if (DatumGetPointer(newOptions) != NULL)
 			repl_val[Anum_pg_class_reloptions - 1] = newOptions;
 		else
 			repl_null[Anum_pg_class_reloptions - 1] = true;

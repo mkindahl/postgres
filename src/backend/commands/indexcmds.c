@@ -373,14 +373,14 @@ CompareOpclassOptions(const Datum *opts1, const Datum *opts2, int natts)
 		Datum		opt1 = opts1 ? opts1[i] : UndefinedDatum;
 		Datum		opt2 = opts2 ? opts2[i] : UndefinedDatum;
 
-		if (opt1 == UndefinedDatum)
+		if (DatumGetPointer(opt1) == NULL)
 		{
-			if (opt2 == UndefinedDatum)
+			if (DatumGetPointer(opt2) == NULL)
 				continue;
 			else
 				return false;
 		}
-		else if (opt2 == UndefinedDatum)
+		else if (DatumGetPointer(opt2) == NULL)
 			return false;
 
 		/*

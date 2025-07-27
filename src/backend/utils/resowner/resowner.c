@@ -572,7 +572,7 @@ ResourceOwnerForget(ResourceOwner owner, Datum value, const ResourceOwnerDesc *k
 	/* Search through all items in the array first. */
 	for (int i = owner->narr - 1; i >= 0; i--)
 	{
-		if (owner->arr[i].item == value &&
+		if (DatumGetVoidPointer(owner->arr[i].item) == DatumGetVoidPointer(value) &&
 			owner->arr[i].kind == kind)
 		{
 			owner->arr[i] = owner->arr[owner->narr - 1];
@@ -594,7 +594,7 @@ ResourceOwnerForget(ResourceOwner owner, Datum value, const ResourceOwnerDesc *k
 		idx = hash_resource_elem(value, kind) & mask;
 		for (uint32 i = 0; i < owner->capacity; i++)
 		{
-			if (owner->hash[idx].item == value &&
+			if (DatumGetVoidPointer(owner->hash[idx].item) == DatumGetVoidPointer(value) &&
 				owner->hash[idx].kind == kind)
 			{
 				owner->hash[idx].item = UndefinedDatum;

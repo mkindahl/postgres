@@ -519,7 +519,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	values[Anum_pg_statistic_ext_stxkind - 1] = PointerGetDatum(stxkind);
 
 	values[Anum_pg_statistic_ext_stxexprs - 1] = exprsDatum;
-	if (exprsDatum == UndefinedDatum)
+	if (DatumGetPointer(exprsDatum) == NULL)
 		nulls[Anum_pg_statistic_ext_stxexprs - 1] = true;
 
 	/* insert it into pg_statistic_ext */

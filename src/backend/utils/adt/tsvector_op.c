@@ -2680,7 +2680,7 @@ ts_stat1(PG_FUNCTION_ARGS)
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
-	if ((result = ts_process_call(funcctx)) != UndefinedDatum)
+	if (DatumGetPointer(result = ts_process_call(funcctx)) != NULL)
 		SRF_RETURN_NEXT(funcctx, result);
 	SRF_RETURN_DONE(funcctx);
 }
@@ -2707,7 +2707,7 @@ ts_stat2(PG_FUNCTION_ARGS)
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
-	if ((result = ts_process_call(funcctx)) != UndefinedDatum)
+	if (DatumGetPointer(result = ts_process_call(funcctx)) != NULL)
 		SRF_RETURN_NEXT(funcctx, result);
 	SRF_RETURN_DONE(funcctx);
 }

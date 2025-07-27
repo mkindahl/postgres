@@ -522,7 +522,7 @@ AppendAttributeTuples(Relation indexRelation, const Datum *attopts, const Nullab
 
 		for (int i = 0; i < indexRelation->rd_att->natts; i++)
 		{
-			if (attopts[i])
+			if (DatumGetPointer(attopts[i]) != NULL)
 				attrs_extra[i].attoptions.value = attopts[i];
 			else
 				attrs_extra[i].attoptions.isnull = true;

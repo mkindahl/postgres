@@ -337,7 +337,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 									 stmt->options,
 									 NULL, NULL, false, false);
 	(void) tablespace_reloptions(newOptions, true);
-	if (newOptions != UndefinedDatum)
+	if (DatumGetPointer(newOptions) != NULL)
 		values[Anum_pg_tablespace_spcoptions - 1] = newOptions;
 	else
 		nulls[Anum_pg_tablespace_spcoptions - 1] = true;
@@ -1060,7 +1060,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 	/* Build new tuple. */
 	memset(repl_null, false, sizeof(repl_null));
 	memset(repl_repl, false, sizeof(repl_repl));
-	if (newOptions != UndefinedDatum)
+	if (DatumGetPointer(newOptions) != NULL)
 		repl_val[Anum_pg_tablespace_spcoptions - 1] = newOptions;
 	else
 		repl_null[Anum_pg_tablespace_spcoptions - 1] = true;

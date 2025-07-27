@@ -4368,7 +4368,7 @@ ExecEvalHashedScalarArrayOp(ExprState *state, ExprEvalStep *op, ExprContext *eco
 			 * We have nulls in the array so a non-null lhs and no match must
 			 * yield NULL.
 			 */
-			result = UndefinedDatum;
+			result = false;
 			resultnull = true;
 		}
 		else
