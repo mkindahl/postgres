@@ -22,6 +22,7 @@
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_auth_members.h"
+#include "catalog/pg_auth_password.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_db_role_setting.h"
@@ -31,6 +32,8 @@
 #include "commands/seclabel.h"
 #include "commands/user.h"
 #include "libpq/crypt.h"
+#include "libpq/scram.h"
+#include "utils/timestamp.h"
 #include "miscadmin.h"
 #include "port/pg_bitutils.h"
 #include "storage/lmgr.h"
@@ -615,6 +618,360 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 }
 
 
+/* -------------------------------------------------------------------------
+ * pg_auth_password helper functions
+ * -------------------------------------------------------------------------
+ */
+
+/*
+ * upsert_auth_password_current -- insert or update the CURRENT (position=0)
+ * row in pg_auth_password for a role.  Keeps any existing PREVIOUS rows
+ * untouched.
+ */
+static void
+upsert_auth_password_current(Oid roleoid, const char *passtext,
+							 TimestampTz validuntil, bool validuntil_null)
+{
+	Relation	rel;
+	ScanKeyData skey[2];
+	SysScanDesc scan;
+	HeapTuple	oldtuple;
+	TimestampTz now = GetCurrentTimestamp();
+
+	rel = table_open(AuthPasswordRelationId, RowExclusiveLock);
+
+	/* Look for an existing CURRENT entry */
+	ScanKeyInit(&skey[0],
+				Anum_pg_auth_password_passroleid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleoid));
+	ScanKeyInit(&skey[1],
+				Anum_pg_auth_password_passposition,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(0));
+
+	scan = systable_beginscan(rel, AuthPasswordRoleidPositionIndexId,
+							  true, NULL, 2, skey);
+	oldtuple = systable_getnext(scan);
+
+	if (HeapTupleIsValid(oldtuple))
+	{
+		/* Update the existing CURRENT row */
+		Datum		values[Natts_pg_auth_password] = {0};
+		bool		nulls[Natts_pg_auth_password] = {0};
+		bool		repl[Natts_pg_auth_password] = {0};
+		HeapTuple	newtuple;
+
+		values[Anum_pg_auth_password_passtext - 1] = CStringGetTextDatum(passtext);
+		repl[Anum_pg_auth_password_passtext - 1] = true;
+
+		if (validuntil_null)
+			nulls[Anum_pg_auth_password_passvaliduntil - 1] = true;
+		else
+			values[Anum_pg_auth_password_passvaliduntil - 1] = TimestampTzGetDatum(validuntil);
+		repl[Anum_pg_auth_password_passvaliduntil - 1] = true;
+
+		values[Anum_pg_auth_password_passchanged - 1] = TimestampTzGetDatum(now);
+		repl[Anum_pg_auth_password_passchanged - 1] = true;
+
+		newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(rel),
+									 values, nulls, repl);
+		CatalogTupleUpdate(rel, &newtuple->t_self, newtuple);
+		heap_freetuple(newtuple);
+	}
+	else
+	{
+		/* Insert a new CURRENT row */
+		Datum		values[Natts_pg_auth_password];
+		bool		nulls[Natts_pg_auth_password];
+		HeapTuple	newtuple;
+
+		memset(values, 0, sizeof(values));
+		memset(nulls, false, sizeof(nulls));
+
+		values[Anum_pg_auth_password_oid - 1] =
+			ObjectIdGetDatum(GetNewOidWithIndex(rel,
+											   AuthPasswordRoleidPositionIndexId,
+											   Anum_pg_auth_password_oid));
+		values[Anum_pg_auth_password_passroleid - 1] = ObjectIdGetDatum(roleoid);
+		values[Anum_pg_auth_password_passposition - 1] = Int32GetDatum(0);
+		values[Anum_pg_auth_password_passtext - 1] = CStringGetTextDatum(passtext);
+		if (validuntil_null)
+			nulls[Anum_pg_auth_password_passvaliduntil - 1] = true;
+		else
+			values[Anum_pg_auth_password_passvaliduntil - 1] = TimestampTzGetDatum(validuntil);
+		values[Anum_pg_auth_password_passchanged - 1] = TimestampTzGetDatum(now);
+
+		newtuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
+		CatalogTupleInsert(rel, newtuple);
+		heap_freetuple(newtuple);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * rotate_auth_password -- install new_passtext as the CURRENT password,
+ * demoting the existing CURRENT entry to PREVIOUS 1.
+ *
+ * window_end / window_end_null are the rotation-window deadline for the
+ * newly-demoted PREVIOUS entry.  current_validuntil / current_validuntil_null
+ * are the passvaliduntil to carry forward to the new CURRENT entry.
+ */
+static void
+rotate_auth_password(Oid roleoid, const char *new_passtext,
+					 TimestampTz window_end, bool window_end_null,
+					 TimestampTz current_validuntil, bool current_validuntil_null)
+{
+	Relation	rel;
+	ScanKeyData skey;
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	List	   *existing = NIL;
+	ListCell   *lc;
+	TimestampTz now = GetCurrentTimestamp();
+
+	rel = table_open(AuthPasswordRelationId, RowExclusiveLock);
+
+	/* Collect all existing rows for this role */
+	ScanKeyInit(&skey,
+				Anum_pg_auth_password_passroleid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleoid));
+	scan = systable_beginscan(rel, AuthPasswordRoleidPositionIndexId,
+							  true, NULL, 1, &skey);
+	while ((tuple = systable_getnext(scan)) != NULL)
+		existing = lappend(existing, heap_copytuple(tuple));
+	systable_endscan(scan);
+
+	/*
+	 * Shift all existing PREVIOUS entries one step further back (position -N
+	 * becomes -(N+1)), then demote CURRENT (0) to PREVIOUS 1 (-1).
+	 */
+	foreach(lc, existing)
+	{
+		HeapTuple	old = (HeapTuple) lfirst(lc);
+		Form_pg_auth_password pwform = (Form_pg_auth_password) GETSTRUCT(old);
+		Datum		values[Natts_pg_auth_password] = {0};
+		bool		nulls[Natts_pg_auth_password] = {0};
+		bool		repl[Natts_pg_auth_password] = {0};
+		HeapTuple	newtuple;
+		int32		oldpos = pwform->passposition;
+
+		if (oldpos == 0)
+		{
+			/* Demote CURRENT to PREVIOUS 1 */
+			values[Anum_pg_auth_password_passposition - 1] = Int32GetDatum(-1);
+			repl[Anum_pg_auth_password_passposition - 1] = true;
+
+			if (window_end_null)
+				nulls[Anum_pg_auth_password_passvaliduntil - 1] = true;
+			else
+				values[Anum_pg_auth_password_passvaliduntil - 1] = TimestampTzGetDatum(window_end);
+			repl[Anum_pg_auth_password_passvaliduntil - 1] = true;
+		}
+		else
+		{
+			/* Shift PREVIOUS N to PREVIOUS N+1 */
+			values[Anum_pg_auth_password_passposition - 1] = Int32GetDatum(oldpos - 1);
+			repl[Anum_pg_auth_password_passposition - 1] = true;
+		}
+
+		newtuple = heap_modify_tuple(old, RelationGetDescr(rel), values, nulls, repl);
+		CatalogTupleUpdate(rel, &newtuple->t_self, newtuple);
+		heap_freetuple(newtuple);
+	}
+
+	/* Insert the new CURRENT entry */
+	{
+		Datum		values[Natts_pg_auth_password];
+		bool		nulls[Natts_pg_auth_password];
+		HeapTuple	newtuple;
+
+		memset(values, 0, sizeof(values));
+		memset(nulls, false, sizeof(nulls));
+
+		values[Anum_pg_auth_password_oid - 1] =
+			ObjectIdGetDatum(GetNewOidWithIndex(rel,
+											   AuthPasswordRoleidPositionIndexId,
+											   Anum_pg_auth_password_oid));
+		values[Anum_pg_auth_password_passroleid - 1] = ObjectIdGetDatum(roleoid);
+		values[Anum_pg_auth_password_passposition - 1] = Int32GetDatum(0);
+		values[Anum_pg_auth_password_passtext - 1] = CStringGetTextDatum(new_passtext);
+		if (current_validuntil_null)
+			nulls[Anum_pg_auth_password_passvaliduntil - 1] = true;
+		else
+			values[Anum_pg_auth_password_passvaliduntil - 1] = TimestampTzGetDatum(current_validuntil);
+		values[Anum_pg_auth_password_passchanged - 1] = TimestampTzGetDatum(now);
+
+		newtuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
+		CatalogTupleInsert(rel, newtuple);
+		heap_freetuple(newtuple);
+	}
+
+	list_free_deep(existing);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * drop_auth_password_prev -- remove PREVIOUS 1 (most recently retired).
+ */
+static void
+drop_auth_password_prev(Oid roleoid)
+{
+	Relation	rel;
+	ScanKeyData skey[2];
+	SysScanDesc scan;
+	HeapTuple	tuple;
+
+	rel = table_open(AuthPasswordRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_pg_auth_password_passroleid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleoid));
+	ScanKeyInit(&skey[1],
+				Anum_pg_auth_password_passposition,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(-1));
+
+	scan = systable_beginscan(rel, AuthPasswordRoleidPositionIndexId,
+							  true, NULL, 2, skey);
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+		CatalogTupleDelete(rel, &tuple->t_self);
+	systable_endscan(scan);
+
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * drop_auth_password_expired -- remove all PREVIOUS entries whose rotation
+ * window has closed (passvaliduntil < now).
+ */
+static void
+drop_auth_password_expired(Oid roleoid)
+{
+	Relation	rel;
+	ScanKeyData skey;
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	TimestampTz now = GetCurrentTimestamp();
+	List	   *to_delete = NIL;
+	ListCell   *lc;
+
+	rel = table_open(AuthPasswordRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&skey,
+				Anum_pg_auth_password_passroleid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleoid));
+	scan = systable_beginscan(rel, AuthPasswordRoleidPositionIndexId,
+							  true, NULL, 1, &skey);
+
+	while ((tuple = systable_getnext(scan)) != NULL)
+	{
+		Form_pg_auth_password pwform = (Form_pg_auth_password) GETSTRUCT(tuple);
+
+		if (pwform->passposition < 0)
+		{
+			bool		isnull;
+			Datum		vd = heap_getattr(tuple,
+										  Anum_pg_auth_password_passvaliduntil,
+										  RelationGetDescr(rel), &isnull);
+
+			if (!isnull && DatumGetTimestampTz(vd) < now)
+				to_delete = lappend(to_delete, heap_copytuple(tuple));
+		}
+	}
+	systable_endscan(scan);
+
+	foreach(lc, to_delete)
+		CatalogTupleDelete(rel, &((HeapTuple) lfirst(lc))->t_self);
+
+	list_free_deep(to_delete);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * drop_auth_passwords_older_than -- retain only the keep_count most recently
+ * retired previous passwords (PREVIOUS 1 through PREVIOUS keep_count);
+ * delete everything further back.
+ *
+ * Positions are -1 (most recent), -2, -3, etc.  We keep positions
+ * -1..-keep_count and delete positions -(keep_count+1) and beyond.
+ */
+static void
+drop_auth_passwords_older_than(Oid roleoid, int keep_count)
+{
+	Relation	rel;
+	ScanKeyData skey;
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	List	   *to_delete = NIL;
+	ListCell   *lc;
+
+	rel = table_open(AuthPasswordRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&skey,
+				Anum_pg_auth_password_passroleid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleoid));
+	scan = systable_beginscan(rel, AuthPasswordRoleidPositionIndexId,
+							  true, NULL, 1, &skey);
+
+	while ((tuple = systable_getnext(scan)) != NULL)
+	{
+		Form_pg_auth_password pwform = (Form_pg_auth_password) GETSTRUCT(tuple);
+
+		/* Delete any PREVIOUS entry beyond the keep_count most recent */
+		if (pwform->passposition < -(int32) keep_count)
+			to_delete = lappend(to_delete, heap_copytuple(tuple));
+	}
+	systable_endscan(scan);
+
+	foreach(lc, to_delete)
+		CatalogTupleDelete(rel, &((HeapTuple) lfirst(lc))->t_self);
+
+	list_free_deep(to_delete);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * drop_all_auth_passwords -- delete all pg_auth_password rows for a role.
+ * Also clears pg_authid.rolpassword when pg_authid_rel is not NULL.
+ */
+static void
+drop_all_auth_passwords(Oid roleoid)
+{
+	Relation	rel;
+	ScanKeyData skey;
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	List	   *to_delete = NIL;
+	ListCell   *lc;
+
+	rel = table_open(AuthPasswordRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&skey,
+				Anum_pg_auth_password_passroleid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleoid));
+	scan = systable_beginscan(rel, AuthPasswordRoleidPositionIndexId,
+							  true, NULL, 1, &skey);
+	while ((tuple = systable_getnext(scan)) != NULL)
+		to_delete = lappend(to_delete, heap_copytuple(tuple));
+	systable_endscan(scan);
+
+	foreach(lc, to_delete)
+		CatalogTupleDelete(rel, &((HeapTuple) lfirst(lc))->t_self);
+
+	list_free_deep(to_delete);
+	table_close(rel, RowExclusiveLock);
+}
+
+
 /*
  * ALTER ROLE
  *
@@ -651,6 +1008,13 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	DefElem    *drolemembers = NULL;
 	DefElem    *dvalidUntil = NULL;
 	DefElem    *dbypassRLS = NULL;
+	/* Password rotation DefElems */
+	DefElem    *dnextPassword = NULL;
+	DefElem    *drollbackPassword = NULL;
+	DefElem    *ddropPrevPassword = NULL;
+	DefElem    *ddropExpiredPasswords = NULL;
+	DefElem    *ddropPasswordsOlderThan = NULL;
+	DefElem    *ddropAllPasswords = NULL;
 	Oid			roleid;
 	Oid			currentUserId = GetUserId();
 	GrantRoleOptions popt;
@@ -729,6 +1093,42 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 			if (dbypassRLS)
 				errorConflictingDefElem(defel, pstate);
 			dbypassRLS = defel;
+		}
+		else if (strcmp(defel->defname, "nextPassword") == 0)
+		{
+			if (dnextPassword)
+				errorConflictingDefElem(defel, pstate);
+			dnextPassword = defel;
+		}
+		else if (strcmp(defel->defname, "rollbackPassword") == 0)
+		{
+			if (drollbackPassword)
+				errorConflictingDefElem(defel, pstate);
+			drollbackPassword = defel;
+		}
+		else if (strcmp(defel->defname, "dropPrevPassword") == 0)
+		{
+			if (ddropPrevPassword)
+				errorConflictingDefElem(defel, pstate);
+			ddropPrevPassword = defel;
+		}
+		else if (strcmp(defel->defname, "dropExpiredPasswords") == 0)
+		{
+			if (ddropExpiredPasswords)
+				errorConflictingDefElem(defel, pstate);
+			ddropExpiredPasswords = defel;
+		}
+		else if (strcmp(defel->defname, "dropPasswordsOlderThan") == 0)
+		{
+			if (ddropPasswordsOlderThan)
+				errorConflictingDefElem(defel, pstate);
+			ddropPasswordsOlderThan = defel;
+		}
+		else if (strcmp(defel->defname, "dropAllPasswords") == 0)
+		{
+			if (ddropAllPasswords)
+				errorConflictingDefElem(defel, pstate);
+			ddropAllPasswords = defel;
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -938,6 +1338,14 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 										   password);
 			new_record[Anum_pg_authid_rolpassword - 1] =
 				CStringGetTextDatum(shadow_pass);
+
+			/*
+			 * Write-through to pg_auth_password: upsert the CURRENT entry.
+			 * Any existing PREVIOUS entries (rotation windows) are preserved.
+			 */
+			upsert_auth_password_current(roleid, shadow_pass,
+										 DatumGetTimestampTz(validUntil_datum),
+										 validUntil_null);
 		}
 		new_record_repl[Anum_pg_authid_rolpassword - 1] = true;
 	}
@@ -947,6 +1355,8 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	{
 		new_record_repl[Anum_pg_authid_rolpassword - 1] = true;
 		new_record_nulls[Anum_pg_authid_rolpassword - 1] = true;
+		/* Remove all password entries from pg_auth_password */
+		drop_all_auth_passwords(roleid);
 	}
 
 	/* valid until */
@@ -963,6 +1373,132 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	new_tuple = heap_modify_tuple(tuple, pg_authid_dsc, new_record,
 								  new_record_nulls, new_record_repl);
 	CatalogTupleUpdate(pg_authid_rel, &tuple->t_self, new_tuple);
+
+	/*
+	 * Handle password rotation operations.  These operate on pg_auth_password
+	 * only; pg_authid.rolpassword is updated below to stay in sync.
+	 */
+	if (dnextPassword)
+	{
+		char	   *new_pass_str = strVal(dnextPassword->arg);
+		char	   *new_passtext;
+		const char *logdetail = NULL;
+
+		/*
+		 * When VALID UNTIL is also given, use it as the rotation-window
+		 * deadline for the demoted PREVIOUS entry.  Otherwise no deadline.
+		 */
+		TimestampTz window_end = validUntil_datum;
+		bool		window_end_null = validUntil_null;
+
+		/* Reject empty passwords */
+		if (new_pass_str[0] == '\0' ||
+			plain_crypt_verify(rolename, new_pass_str, "", &logdetail) == STATUS_OK)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PASSWORD),
+					 errmsg("empty string is not a valid password")));
+
+		/*
+		 * For SCRAM rotation: derive the new secret using the same salt as
+		 * the current secret, so both share the salt and can be verified in
+		 * the same SCRAM exchange.
+		 */
+		if (get_password_type(new_pass_str) == PASSWORD_TYPE_PLAINTEXT)
+		{
+			ScanKeyData sk[2];
+			SysScanDesc sc;
+			HeapTuple	cur_tup;
+			char	   *cur_passtext = NULL;
+			Relation	apr;
+
+			apr = table_open(AuthPasswordRelationId, AccessShareLock);
+			ScanKeyInit(&sk[0], Anum_pg_auth_password_passroleid,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(roleid));
+			ScanKeyInit(&sk[1], Anum_pg_auth_password_passposition,
+						BTEqualStrategyNumber, F_INT4EQ,
+						Int32GetDatum(0));
+			sc = systable_beginscan(apr, AuthPasswordRoleidPositionIndexId,
+									true, NULL, 2, sk);
+			cur_tup = systable_getnext(sc);
+			if (HeapTupleIsValid(cur_tup))
+			{
+				bool		isnull;
+				Datum		d = heap_getattr(cur_tup,
+											 Anum_pg_auth_password_passtext,
+											 RelationGetDescr(apr), &isnull);
+
+				if (!isnull)
+					cur_passtext = TextDatumGetCString(d);
+			}
+			systable_endscan(sc);
+			table_close(apr, AccessShareLock);
+
+			if (cur_passtext &&
+				get_password_type(cur_passtext) == PASSWORD_TYPE_SCRAM_SHA_256)
+				new_passtext = pg_be_scram_build_secret_with_salt(new_pass_str,
+																  cur_passtext);
+			else
+				new_passtext = encrypt_password(Password_encryption, rolename,
+												new_pass_str);
+		}
+		else
+			new_passtext = pstrdup(new_pass_str);
+
+		rotate_auth_password(roleid, new_passtext,
+							 window_end, window_end_null,
+							 DatumGetTimestampTz(validUntil_datum),
+							 validUntil_null);
+
+		/* Sync pg_authid write-through alias */
+		{
+			Datum		updvals[Natts_pg_authid] = {0};
+			bool		updnulls[Natts_pg_authid] = {0};
+			bool		updrepl[Natts_pg_authid] = {0};
+			HeapTuple	updtup;
+
+			updvals[Anum_pg_authid_rolpassword - 1] = CStringGetTextDatum(new_passtext);
+			updrepl[Anum_pg_authid_rolpassword - 1] = true;
+			updtup = heap_modify_tuple(new_tuple, pg_authid_dsc,
+									   updvals, updnulls, updrepl);
+			CatalogTupleUpdate(pg_authid_rel, &new_tuple->t_self, updtup);
+			heap_freetuple(updtup);
+		}
+	}
+
+	if (ddropPrevPassword)
+		drop_auth_password_prev(roleid);
+
+	if (ddropExpiredPasswords)
+		drop_auth_password_expired(roleid);
+
+	if (ddropPasswordsOlderThan)
+		drop_auth_passwords_older_than(roleid,
+									   intVal(ddropPasswordsOlderThan->arg));
+
+	if (ddropAllPasswords)
+	{
+		drop_all_auth_passwords(roleid);
+		/* Also clear pg_authid.rolpassword */
+		{
+			Datum		updvals[Natts_pg_authid] = {0};
+			bool		updnulls[Natts_pg_authid] = {0};
+			bool		updrepl[Natts_pg_authid] = {0};
+			HeapTuple	updtup;
+
+			updnulls[Anum_pg_authid_rolpassword - 1] = true;
+			updrepl[Anum_pg_authid_rolpassword - 1] = true;
+			updtup = heap_modify_tuple(new_tuple, pg_authid_dsc,
+									   updvals, updnulls, updrepl);
+			CatalogTupleUpdate(pg_authid_rel, &new_tuple->t_self, updtup);
+			heap_freetuple(updtup);
+		}
+	}
+
+	if (drollbackPassword)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("PREVIOUS PASSWORD = CURRENT is not yet implemented")));
 
 	InvokeObjectPostAlterHook(AuthIdRelationId, roleid, 0);
 

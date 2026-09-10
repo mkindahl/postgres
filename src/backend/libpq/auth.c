@@ -628,8 +628,8 @@ ClientAuthentication(Port *port)
 			status = STATUS_OK;
 			break;
 		case uaOAuth:
-			status = CheckSASLAuth(&pg_be_oauth_mech, port, NULL, &logdetail,
-								   &abandoned);
+			status = CheckSASLAuth(&pg_be_oauth_mech, port, NULL, 0,
+								   &logdetail, &abandoned);
 			break;
 	}
 
@@ -796,7 +796,7 @@ CheckPasswordAuth(Port *port, const char **logdetail)
 {
 	char	   *passwd;
 	int			result;
-	char	   *shadow_pass;
+	RolePasswordInfo *pwinfo;
 	bool		md5_password = false;
 
 	sendAuthRequest(port, AUTH_REQ_PASSWORD, NULL, 0);
@@ -805,18 +805,16 @@ CheckPasswordAuth(Port *port, const char **logdetail)
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-	shadow_pass = get_role_password(port->user_name, logdetail);
-	if (shadow_pass)
+	pwinfo = get_role_password(port->user_name, logdetail);
+	if (pwinfo)
 	{
-		result = plain_crypt_verify(port->user_name, shadow_pass, passwd,
-									logdetail);
-		md5_password = (get_password_type(shadow_pass) == PASSWORD_TYPE_MD5);
+		md5_password = (get_password_type(pwinfo->current.passtext) == PASSWORD_TYPE_MD5);
+		result = plain_crypt_verify_with_rotation(port->user_name, pwinfo,
+												  passwd, logdetail);
 	}
 	else
 		result = STATUS_ERROR;
 
-	if (shadow_pass)
-		pfree(shadow_pass);
 	pfree(passwd);
 
 	if (result == STATUS_OK)
@@ -836,14 +834,16 @@ static int
 CheckPWChallengeAuth(Port *port, const char **logdetail)
 {
 	int			auth_result;
-	char	   *shadow_pass;
+	RolePasswordInfo *pwinfo;
 	PasswordType pwtype;
+	const char **secrets;
+	int			num_secrets;
 
 	Assert(port->hba->auth_method == uaSCRAM ||
 		   port->hba->auth_method == uaMD5);
 
-	/* First look up the user's password. */
-	shadow_pass = get_role_password(port->user_name, logdetail);
+	/* First look up the user's password(s). */
+	pwinfo = get_role_password(port->user_name, logdetail);
 
 	/*
 	 * If the user does not exist, or has no password or it's expired, we
@@ -854,10 +854,28 @@ CheckPWChallengeAuth(Port *port, const char **logdetail)
 	 * probably have a password of that type, and if we pretend that this user
 	 * had a password of that type, too, it "blends in" best.
 	 */
-	if (!shadow_pass)
+	if (!pwinfo)
+	{
 		pwtype = Password_encryption;
+		secrets = NULL;
+		num_secrets = 0;
+	}
 	else
-		pwtype = get_password_type(shadow_pass);
+	{
+		pwtype = get_password_type(pwinfo->current.passtext);
+
+		/*
+		 * Build an array of secrets for the SASL mechanism.  Slot 0 is always
+		 * the current password; slots 1..N are active previous passwords kept
+		 * for password-rotation windows.  SCRAM can verify against any of
+		 * them as long as they share the same salt (see auth-scram.c).
+		 */
+		num_secrets = 1 + pwinfo->nprevious;
+		secrets = (const char **) palloc(sizeof(char *) * num_secrets);
+		secrets[0] = pwinfo->current.passtext;
+		for (int i = 0; i < pwinfo->nprevious; i++)
+			secrets[1 + i] = pwinfo->previous[i].passtext;
+	}
 
 	/*
 	 * If 'md5' authentication is allowed, decide whether to perform 'md5' or
@@ -868,16 +886,21 @@ CheckPWChallengeAuth(Port *port, const char **logdetail)
 	 * If MD5 authentication is not allowed, always use SCRAM.  If the user
 	 * had an MD5 password, CheckSASLAuth() with the SCRAM mechanism will
 	 * fail.
+	 *
+	 * MD5 authentication only uses the current password; previous passwords
+	 * cannot be verified with MD5 because the server-side challenge uses a
+	 * random salt that the client must incorporate.
 	 */
 	if (port->hba->auth_method == uaMD5 && pwtype == PASSWORD_TYPE_MD5)
-		auth_result = CheckMD5Auth(port, shadow_pass, logdetail);
+		auth_result = CheckMD5Auth(port,
+								   pwinfo ? pwinfo->current.passtext : NULL,
+								   logdetail);
 	else
-		auth_result = CheckSASLAuth(&pg_be_scram_mech, port, shadow_pass,
+		auth_result = CheckSASLAuth(&pg_be_scram_mech, port,
+									secrets, num_secrets,
 									logdetail, NULL /* can't abandon SCRAM */ );
 
-	if (shadow_pass)
-		pfree(shadow_pass);
-	else
+	if (!pwinfo)
 	{
 		/*
 		 * If get_role_password() returned error, authentication better not

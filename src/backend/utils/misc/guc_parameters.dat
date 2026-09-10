@@ -2376,6 +2376,16 @@
   max => 'INT_MAX',
 },
 
+{ name => 'password_rotation_max_duration', type => 'int', context => 'PGC_SIGHUP', group => 'CONN_AUTH_AUTH',
+  short_desc => 'Maximum duration of a password rotation window.',
+  long_desc => 'Limits how far in the future a rotation window end time (VALID UNTIL on a PREVIOUS password) may be set.  0 means no limit.',
+  flags => 'GUC_UNIT_MIN',
+  variable => 'password_rotation_max_duration',
+  boot_val => '1440',
+  min => '0',
+  max => 'INT_MAX',
+},
+
 { name => 'plan_cache_mode', type => 'enum', context => 'PGC_USERSET', group => 'QUERY_TUNING_OTHER',
   short_desc => 'Controls the planner\'s selection of custom or generic plan.',
   long_desc => 'Prepared statements can have custom and generic plans, and the planner will attempt to choose which is better.  This can be set to override the default behavior.',

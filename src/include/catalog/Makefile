@@ -53,6 +53,7 @@ CATALOG_HEADERS := \
 	pg_tablespace.h \
 	pg_authid.h \
 	pg_auth_members.h \
+	pg_auth_password.h \
 	pg_shdepend.h \
 	pg_shdescription.h \
 	pg_ts_config.h \
@@ -95,6 +96,7 @@ POSTGRES_BKI_DATA = \
 	pg_amproc.dat \
 	pg_authid.dat \
 	pg_auth_members.dat \
+	pg_auth_password.dat \
 	pg_cast.dat \
 	pg_class.dat \
 	pg_collation.dat \

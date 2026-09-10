@@ -105,7 +105,7 @@
 
 static void scram_get_mechanisms(Port *port, StringInfo buf);
 static void *scram_init(Port *port, const char *selected_mech,
-						const char *shadow_pass);
+						const char **secrets, int num_secrets);
 static int	scram_exchange(void *opaq, const char *input, int inputlen,
 						   char **output, int *outputlen,
 						   const char **logdetail);
@@ -163,6 +163,26 @@ typedef struct
 	char	   *server_nonce;
 
 	/*
+	 * Multi-password rotation support.
+	 *
+	 * When a role has active previous passwords (within their rotation
+	 * window), those secrets must share the same salt and iteration count as
+	 * the primary secret so that the server-first-message salt commitment
+	 * covers all candidates.  prev_StoredKeys and prev_ServerKeys are flat
+	 * byte arrays of (num_prev_secrets * key_length) bytes each.
+	 */
+	int			num_prev_secrets;
+	uint8	   *prev_StoredKeys; /* num_prev_secrets * key_length bytes */
+	uint8	   *prev_ServerKeys; /* num_prev_secrets * key_length bytes */
+
+	/*
+	 * The ServerKey that corresponds to the password entry that the client
+	 * successfully proved knowledge of.  Set by verify_client_proof(); NULL
+	 * until then, or if the exchange is doomed.
+	 */
+	const uint8 *verified_ServerKey;
+
+	/*
 	 * If something goes wrong during the authentication, or we are performing
 	 * a "mock" authentication (see comments at top of file), the 'doomed'
 	 * flag is set.  A reason for the failure, for the server log, is put in
@@ -176,6 +196,9 @@ static void read_client_first_message(scram_state *state, const char *input);
 static void read_client_final_message(scram_state *state, const char *input);
 static char *build_server_first_message(scram_state *state);
 static char *build_server_final_message(scram_state *state);
+static bool verify_client_proof_against(scram_state *state,
+										const uint8 *candidate_StoredKey,
+										const uint8 *candidate_ServerKey);
 static bool verify_client_proof(scram_state *state);
 static bool verify_final_nonce(scram_state *state);
 static void mock_scram_secret(const char *username, pg_cryptohash_type *hash_type,
@@ -228,14 +251,19 @@ scram_get_mechanisms(Port *port, StringInfo buf)
  * It should be one of the mechanisms that we support, as returned by
  * scram_get_mechanisms().
  *
- * 'shadow_pass' is the role's stored secret, from pg_authid.rolpassword.
- * The username was provided by the client in the startup message, and is
- * available in port->user_name.  If 'shadow_pass' is NULL, we still perform
- * an authentication exchange, but it will fail, as if an incorrect password
- * was given.
+ * 'secrets' is an array of 'num_secrets' stored SCRAM secrets for the role.
+ * secrets[0] is the CURRENT password; additional entries (if any) are
+ * PREVIOUS passwords kept alive during a rotation window.  All secrets must
+ * share the same salt and iteration count as secrets[0] so that the
+ * server-first-message salt commitment covers all candidates.  Secrets that
+ * do not match are silently skipped.
+ *
+ * If 'secrets' is NULL we still perform an authentication exchange, but it
+ * will fail, as if an incorrect password was given.
  */
 static void *
-scram_init(Port *port, const char *selected_mech, const char *shadow_pass)
+scram_init(Port *port, const char *selected_mech,
+		   const char **secrets, int num_secrets)
 {
 	scram_state *state;
 	bool		got_secret;
@@ -265,15 +293,16 @@ scram_init(Port *port, const char *selected_mech, const char *shadow_pass)
 				 errmsg("client selected an invalid SASL authentication mechanism")));
 
 	/*
-	 * Parse the stored secret.
+	 * Parse the primary stored secret (secrets[0]).
 	 */
-	if (shadow_pass)
+	got_secret = false;
+	if (secrets != NULL && num_secrets > 0 && secrets[0] != NULL)
 	{
-		int			password_type = get_password_type(shadow_pass);
+		int			password_type = get_password_type(secrets[0]);
 
 		if (password_type == PASSWORD_TYPE_SCRAM_SHA_256)
 		{
-			if (parse_scram_secret(shadow_pass, &state->iterations,
+			if (parse_scram_secret(secrets[0], &state->iterations,
 								   &state->hash_type, &state->key_length,
 								   &state->salt,
 								   state->StoredKey,
@@ -288,28 +317,75 @@ scram_init(Port *port, const char *selected_mech, const char *shadow_pass)
 				ereport(LOG,
 						(errmsg("invalid SCRAM secret for user \"%s\"",
 								state->port->user_name)));
-				got_secret = false;
 			}
 		}
 		else
 		{
 			/*
-			 * The user doesn't have SCRAM secret. (You cannot do SCRAM
+			 * The user doesn't have a SCRAM secret. (You cannot do SCRAM
 			 * authentication with an MD5 hash.)
 			 */
 			state->logdetail = psprintf(_("User \"%s\" does not have a valid SCRAM secret."),
 										state->port->user_name);
-			got_secret = false;
 		}
 	}
-	else
+
+	/*
+	 * Parse additional secrets for password-rotation support.  Only secrets
+	 * that share the same salt and iterations as the primary are usable
+	 * (SCRAM commits to the salt in server-first-message).
+	 */
+	if (got_secret && num_secrets > 1)
 	{
-		/*
-		 * The caller requested us to perform a dummy authentication.  This is
-		 * considered normal, since the caller requested it, so don't set log
-		 * detail.
-		 */
-		got_secret = false;
+		int			prev_alloc = num_secrets - 1;
+
+		state->prev_StoredKeys = palloc(prev_alloc * state->key_length);
+		state->prev_ServerKeys = palloc(prev_alloc * state->key_length);
+		state->num_prev_secrets = 0;
+
+		for (int i = 1; i < num_secrets; i++)
+		{
+			int			prev_iterations;
+			pg_cryptohash_type prev_hash_type;
+			int			prev_key_length;
+			char	   *prev_salt;
+			uint8		prev_StoredKey[SCRAM_MAX_KEY_LEN];
+			uint8		prev_ServerKey[SCRAM_MAX_KEY_LEN];
+
+			if (secrets[i] == NULL)
+				continue;
+			if (get_password_type(secrets[i]) != PASSWORD_TYPE_SCRAM_SHA_256)
+				continue;
+			if (!parse_scram_secret(secrets[i],
+									&prev_iterations, &prev_hash_type,
+									&prev_key_length, &prev_salt,
+									prev_StoredKey, prev_ServerKey))
+				continue;
+
+			/*
+			 * The previous secret must share the same salt and iterations.
+			 * If it doesn't, we cannot verify it in this exchange.
+			 */
+			if (prev_iterations != state->iterations ||
+				prev_key_length != state->key_length ||
+				strcmp(prev_salt, state->salt) != 0)
+			{
+				ereport(LOG,
+						(errmsg("skipping previous SCRAM secret for user \"%s\": "
+								"salt or iteration count does not match current secret",
+								state->port->user_name)));
+				continue;
+			}
+
+			/* Salt matches — add to the rotation candidates */
+			memcpy(state->prev_StoredKeys +
+				   state->num_prev_secrets * state->key_length,
+				   prev_StoredKey, state->key_length);
+			memcpy(state->prev_ServerKeys +
+				   state->num_prev_secrets * state->key_length,
+				   prev_ServerKey, state->key_length);
+			state->num_prev_secrets++;
+		}
 	}
 
 	/*
@@ -465,7 +541,7 @@ scram_exchange(void *opaq, const char *input, int inputlen,
 	if (result == PG_SASL_EXCHANGE_SUCCESS && state->state == SCRAM_AUTH_FINISHED)
 	{
 		memcpy(MyProcPort->scram_ClientKey, state->ClientKey, sizeof(MyProcPort->scram_ClientKey));
-		memcpy(MyProcPort->scram_ServerKey, state->ServerKey, sizeof(MyProcPort->scram_ServerKey));
+		memcpy(MyProcPort->scram_ServerKey, state->verified_ServerKey, sizeof(MyProcPort->scram_ServerKey));
 		MyProcPort->has_scram_keys = true;
 	}
 
@@ -505,6 +581,68 @@ pg_be_scram_build_secret(const char *password)
 								saltbuf, SCRAM_DEFAULT_SALT_LEN,
 								scram_sha_256_iterations, password,
 								&errstr);
+
+	if (prep_password)
+		pfree(prep_password);
+
+	return result;
+}
+
+/*
+ * Build a SCRAM secret for a new password, reusing the salt from an
+ * existing secret.  This is used during password rotation so that the new
+ * and old secrets share the same salt; the server can then send that salt in
+ * server-first-message and verify the client proof against either secret.
+ *
+ * existing_secret is the current SCRAM-SHA-256 secret stored for the role.
+ * The returned secret is palloc'd.
+ */
+char *
+pg_be_scram_build_secret_with_salt(const char *password,
+								   const char *existing_secret)
+{
+	char	   *prep_password;
+	pg_saslprep_rc rc;
+	int			iterations;
+	pg_cryptohash_type hash_type;
+	int			key_length;
+	char	   *encoded_salt;
+	uint8		stored_key[SCRAM_MAX_KEY_LEN];
+	uint8		server_key[SCRAM_MAX_KEY_LEN];
+	uint8	   *salt;
+	int			saltlen;
+	char	   *result;
+	const char *errstr = NULL;
+
+	/* Extract salt and iterations from the existing secret */
+	if (!parse_scram_secret(existing_secret, &iterations, &hash_type,
+							&key_length, &encoded_salt,
+							stored_key, server_key))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not parse existing SCRAM secret")));
+
+	saltlen = pg_b64_dec_len(strlen(encoded_salt));
+	salt = palloc(saltlen);
+	saltlen = pg_b64_decode(encoded_salt, strlen(encoded_salt), salt, saltlen);
+	if (saltlen < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not decode salt from existing SCRAM secret")));
+
+	/* Normalize the new password */
+	rc = pg_saslprep(password, &prep_password);
+	if (rc == SASLPREP_SUCCESS)
+		password = (const char *) prep_password;
+
+	result = scram_build_secret(hash_type, key_length,
+								salt, saltlen,
+								iterations, password,
+								&errstr);
+	if (!result)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not build SCRAM secret: %s", errstr)));
 
 	if (prep_password)
 		pfree(prep_password);
@@ -1139,25 +1277,23 @@ verify_final_nonce(scram_state *state)
 }
 
 /*
- * Verify the client proof contained in the last message received from
- * client in an exchange.  Returns true if the verification is a success,
- * or false for a failure.
+ * Try to verify the client proof against one candidate StoredKey.
+ *
+ * If the proof matches, stores ClientKey in state->ClientKey and returns true.
  */
 static bool
-verify_client_proof(scram_state *state)
+verify_client_proof_against(scram_state *state,
+							const uint8 *candidate_StoredKey,
+							const uint8 *candidate_ServerKey)
 {
 	uint8		ClientSignature[SCRAM_MAX_KEY_LEN];
+	uint8		ClientKey[SCRAM_MAX_KEY_LEN];
 	uint8		client_StoredKey[SCRAM_MAX_KEY_LEN];
 	pg_hmac_ctx *ctx = pg_hmac_create(state->hash_type);
 	int			i;
 	const char *errstr = NULL;
 
-	/*
-	 * Calculate ClientSignature.  Note that we don't log directly a failure
-	 * here even when processing the calculations as this could involve a mock
-	 * authentication.
-	 */
-	if (pg_hmac_init(ctx, state->StoredKey, state->key_length) < 0 ||
+	if (pg_hmac_init(ctx, candidate_StoredKey, state->key_length) < 0 ||
 		pg_hmac_update(ctx,
 					   (uint8 *) state->client_first_message_bare,
 					   strlen(state->client_first_message_bare)) < 0 ||
@@ -1177,19 +1313,48 @@ verify_client_proof(scram_state *state)
 
 	pg_hmac_free(ctx);
 
-	/* Extract the ClientKey that the client calculated from the proof */
+	/* Recover the ClientKey the client used */
 	for (i = 0; i < state->key_length; i++)
-		state->ClientKey[i] = state->ClientProof[i] ^ ClientSignature[i];
+		ClientKey[i] = state->ClientProof[i] ^ ClientSignature[i];
 
-	/* Hash it one more time, and compare with StoredKey */
-	if (scram_H(state->ClientKey, state->hash_type, state->key_length,
+	/* Hash ClientKey and compare with the candidate StoredKey */
+	if (scram_H(ClientKey, state->hash_type, state->key_length,
 				client_StoredKey, &errstr) < 0)
 		elog(ERROR, "could not hash stored key: %s", errstr);
 
-	if (timingsafe_bcmp(client_StoredKey, state->StoredKey, state->key_length) != 0)
+	if (timingsafe_bcmp(client_StoredKey, candidate_StoredKey,
+						state->key_length) != 0)
 		return false;
 
+	/* Match! Record the ClientKey and the ServerKey for this password entry */
+	memcpy(state->ClientKey, ClientKey, state->key_length);
+	state->verified_ServerKey = candidate_ServerKey;
 	return true;
+}
+
+/*
+ * Verify the client proof contained in the last message received from
+ * client in an exchange.  Returns true if the verification is a success,
+ * or false for a failure.
+ */
+static bool
+verify_client_proof(scram_state *state)
+{
+	/* Try the primary (current) password first */
+	if (verify_client_proof_against(state, state->StoredKey, state->ServerKey))
+		return true;
+
+	/* Try previous passwords (rotation window), in recency order */
+	for (int i = 0; i < state->num_prev_secrets; i++)
+	{
+		const uint8 *sk = state->prev_StoredKeys + i * state->key_length;
+		const uint8 *vk = state->prev_ServerKeys + i * state->key_length;
+
+		if (verify_client_proof_against(state, sk, vk))
+			return true;
+	}
+
+	return false;
 }
 
 /*
@@ -1414,8 +1579,8 @@ build_server_final_message(scram_state *state)
 	int			siglen;
 	pg_hmac_ctx *ctx = pg_hmac_create(state->hash_type);
 
-	/* calculate ServerSignature */
-	if (pg_hmac_init(ctx, state->ServerKey, state->key_length) < 0 ||
+	/* calculate ServerSignature using the key from the matched password entry */
+	if (pg_hmac_init(ctx, state->verified_ServerKey, state->key_length) < 0 ||
 		pg_hmac_update(ctx,
 					   (uint8 *) state->client_first_message_bare,
 					   strlen(state->client_first_message_bare)) < 0 ||

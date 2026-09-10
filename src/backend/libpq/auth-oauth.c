@@ -35,7 +35,7 @@
 char	   *oauth_validator_libraries_string = NULL;
 
 static void oauth_get_mechanisms(Port *port, StringInfo buf);
-static void *oauth_init(Port *port, const char *selected_mech, const char *shadow_pass);
+static void *oauth_init(Port *port, const char *selected_mech, const char **secrets, int num_secrets);
 static int	oauth_exchange(void *opaq, const char *input, int inputlen,
 						   char **output, int *outputlen, const char **logdetail);
 
@@ -106,7 +106,7 @@ oauth_get_mechanisms(Port *port, StringInfo buf)
  * For a full description of the API, see libpq/sasl.h.
  */
 static void *
-oauth_init(Port *port, const char *selected_mech, const char *shadow_pass)
+oauth_init(Port *port, const char *selected_mech, const char **secrets, int num_secrets)
 {
 	struct oauth_ctx *ctx;
 

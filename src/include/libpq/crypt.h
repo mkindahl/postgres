@@ -28,6 +28,9 @@
 /* Threshold for password expiration warnings. */
 extern PGDLLIMPORT int password_expiration_warning_threshold;
 
+/* Maximum allowed rotation window duration in seconds (0 = no limit). */
+extern PGDLLIMPORT int password_rotation_max_duration;
+
 /* Enables deprecation warnings for MD5 passwords. */
 extern PGDLLIMPORT bool md5_password_warnings;
 
@@ -47,11 +50,38 @@ typedef enum PasswordType
 	PASSWORD_TYPE_SCRAM_SHA_256,
 } PasswordType;
 
+/*
+ * One password entry from pg_auth_password.
+ */
+typedef struct RolePasswordEntry
+{
+	int			position;		/* 0 = CURRENT, -1 = PREVIOUS 1, etc. */
+	char	   *passtext;		/* SCRAM-SHA-256 or MD5 hash */
+	TimestampTz validuntil;
+	bool		validuntil_isnull;
+	TimestampTz changed;
+	bool		changed_isnull;
+} RolePasswordEntry;
+
+/*
+ * All active password entries for a role, as returned by get_role_password().
+ *
+ * 'current' is always the CURRENT (passposition=0) entry.
+ * 'previous' is an array of active PREVIOUS entries (passvaliduntil > now),
+ * sorted by position descending (PREVIOUS 1 first).
+ */
+typedef struct RolePasswordInfo
+{
+	RolePasswordEntry current;
+	RolePasswordEntry *previous;
+	int			nprevious;
+} RolePasswordInfo;
+
 extern PasswordType get_password_type(const char *shadow_pass);
 extern char *encrypt_password(PasswordType target_type, const char *role,
 							  const char *password);
 
-extern char *get_role_password(const char *role, const char **logdetail);
+extern RolePasswordInfo *get_role_password(const char *role, const char **logdetail);
 
 extern int	md5_crypt_verify(const char *role, const char *shadow_pass,
 							 const char *client_pass, const uint8 *md5_salt,
@@ -59,5 +89,9 @@ extern int	md5_crypt_verify(const char *role, const char *shadow_pass,
 extern int	plain_crypt_verify(const char *role, const char *shadow_pass,
 							   const char *client_pass,
 							   const char **logdetail);
+extern int	plain_crypt_verify_with_rotation(const char *role,
+											  RolePasswordInfo *info,
+											  const char *client_pass,
+											  const char **logdetail);
 
 #endif

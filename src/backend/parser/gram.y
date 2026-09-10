@@ -741,7 +741,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	DOUBLE_P DROP
 
 	EACH ELSE EMPTY_P ENABLE_P ENCODING ENCRYPTED END_P ENFORCED ENUM_P ERROR_P
-	ESCAPE EVENT EXCEPT EXCLUDE EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN
+	ESCAPE EVENT EXCEPT EXCLUDE EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPIRED EXPLAIN
 	EXPRESSION EXTENSION EXTERNAL EXTRACT
 
 	FALSE_P FAMILY FETCH FILTER FINALIZE FIRST_P FLOAT_P FOLLOWING FOR
@@ -773,13 +773,13 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
 	NULLS_P NUMERIC
 
-	OBJECT_P OBJECTS_P OF OFF OFFSET OIDS OLD OMIT ON ONLY OPERATOR OPTION OPTIONS OR
+	OBJECT_P OBJECTS_P OF OFF OFFSET OIDS OLD OLDER OMIT ON ONLY OPERATOR OPTION OPTIONS OR
 	ORDER ORDINALITY OTHERS OUT_P OUTER_P
 	OVER OVERLAPS OVERLAY OVERRIDING OWNED OWNER
 
-	PARALLEL PARAMETER PARSER PARTIAL PARTITION PASSING PASSWORD PATH
+	PARALLEL PARAMETER PARSER PARTIAL PARTITION PASSING PASSWORD PASSWORDS PATH
 	PERIOD PLACING PLAN PLANS POLICY PORTION
-	POSITION PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
+	POSITION PRECEDING PRECISION PRESERVE PREPARE PREPARED PREVIOUS PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROCEDURES PROGRAM PUBLICATION
 
 	QUOTE QUOTES
@@ -796,7 +796,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	START STATEMENT STATISTICS STDIN STDOUT STORAGE STORED STRICT_P STRING_P STRIP_P
 	SUBSCRIPTION SUBSTRING SUPPORT SYMMETRIC SYSID SYSTEM_P SYSTEM_USER
 
-	TABLE TABLES TABLESAMPLE TABLESPACE TARGET TEMP TEMPLATE TEMPORARY TEXT_P THEN
+	TABLE TABLES TABLESAMPLE TABLESPACE TARGET TEMP TEMPLATE TEMPORARY TEXT_P THAN THEN
 	TIES TIME TIMESTAMP TO TRAILING TRANSACTION TRANSFORM
 	TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P TYPES_P
@@ -1288,6 +1288,41 @@ AlterOptRoleElem:
 							 errmsg("UNENCRYPTED PASSWORD is no longer supported"),
 							 errhint("Remove UNENCRYPTED to store the password in encrypted form instead."),
 							 parser_errposition(@1)));
+				}
+			/* Password rotation: install a new CURRENT password, demoting the
+			 * old one to PREVIOUS 1.  The rotation-window deadline for the
+			 * demoted previous password is set via a separate
+			 * VALID UNTIL AlterOptRoleElem when provided. */
+			| NEXT PASSWORD Sconst
+				{
+					$$ = makeDefElem("nextPassword", (Node *) makeString($3), @1);
+				}
+			/* Roll back a rotation: demote CURRENT back to PREVIOUS 1 and
+			 * promote the most recent PREVIOUS to CURRENT. */
+			| PREVIOUS PASSWORD '=' CURRENT_P
+				{
+					$$ = makeDefElem("rollbackPassword", NULL, @1);
+				}
+			/* Drop only the most-recently-retired previous password. */
+			| DROP PREVIOUS PASSWORD
+				{
+					$$ = makeDefElem("dropPrevPassword", NULL, @1);
+				}
+			/* Drop all previous passwords whose rotation window has closed. */
+			| DROP EXPIRED PASSWORDS
+				{
+					$$ = makeDefElem("dropExpiredPasswords", NULL, @1);
+				}
+			/* Drop previous passwords beyond the N most recent. */
+			| DROP PASSWORDS OLDER THAN PREVIOUS Iconst
+				{
+					$$ = makeDefElem("dropPasswordsOlderThan",
+									 (Node *) makeInteger($6), @1);
+				}
+			/* Remove all password entries, including the current one. */
+			| DROP ALL PASSWORDS
+				{
+					$$ = makeDefElem("dropAllPasswords", NULL, @1);
 				}
 			| INHERIT
 				{
@@ -18262,6 +18297,7 @@ unreserved_keyword:
 			| EXCLUDING
 			| EXCLUSIVE
 			| EXECUTE
+			| EXPIRED
 			| EXPLAIN
 			| EXPRESSION
 			| EXTENSION
@@ -18356,6 +18392,7 @@ unreserved_keyword:
 			| OFF
 			| OIDS
 			| OLD
+			| OLDER
 			| OMIT
 			| OPERATOR
 			| OPTION
@@ -18373,6 +18410,7 @@ unreserved_keyword:
 			| PARTITION
 			| PASSING
 			| PASSWORD
+			| PASSWORDS
 			| PATH
 			| PERIOD
 			| PLAN
@@ -18383,6 +18421,7 @@ unreserved_keyword:
 			| PREPARE
 			| PREPARED
 			| PRESERVE
+			| PREVIOUS
 			| PRIOR
 			| PRIVILEGES
 			| PROCEDURAL

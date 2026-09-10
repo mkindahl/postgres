@@ -24,11 +24,13 @@
  * Perform a SASL exchange with a libpq client, using a specific mechanism
  * implementation.
  *
- * shadow_pass is an optional pointer to the stored secret of the role
- * authenticated, from pg_authid.rolpassword.  For mechanisms that use
- * shadowed passwords, a NULL pointer here means that an entry could not
- * be found for the role (or the user does not exist), and the mechanism
- * should fail the authentication exchange.
+ * secrets is an array of num_secrets stored password strings for the role
+ * being authenticated.  secrets[0] is always the current password; additional
+ * elements (if any) are previous passwords kept alive during a rotation
+ * window.  Pass NULL / 0 for mechanisms that do not use shadow passwords.
+ * For mechanisms that do use shadow passwords, a NULL secrets pointer means
+ * that no entry was found for the role (or the user does not exist), and the
+ * mechanism should fail the authentication exchange.
  *
  * Some SASL mechanisms (e.g. OAUTHBEARER) define special exchanges for
  * parameter discovery. These exchanges will always result in STATUS_ERROR,
@@ -43,11 +45,12 @@
  * assist debugging by the server admin.
  *
  * A mechanism is not required to utilize a shadow entry, or even a password
- * system at all; for these cases, shadow_pass may be ignored and the caller
- * should just pass NULL.
+ * system at all; for these cases, secrets may be ignored and the caller
+ * should just pass NULL / 0.
  */
 int
-CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
+CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port,
+			  const char **secrets, int num_secrets,
 			  const char **logdetail, bool *abandoned)
 {
 	StringInfoData sasl_mechs;
@@ -134,7 +137,7 @@ CheckSASLAuth(const pg_be_sasl_mech *mech, Port *port, char *shadow_pass,
 			 * This is because we don't want to reveal to an attacker what
 			 * usernames are valid, nor which users have a valid password.
 			 */
-			opaq = mech->init(port, selected_mech, shadow_pass);
+			opaq = mech->init(port, selected_mech, secrets, num_secrets);
 
 			inputlen = pq_getmsgint(&buf, 4);
 			if (inputlen == -1)

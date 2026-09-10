@@ -45,8 +45,13 @@ CATALOG(pg_authid,1260,AuthIdRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID(284
 
 	/* remaining fields may be null; use heap_getattr to read them! */
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text		rolpassword;	/* password, if any */
-	timestamptz rolvaliduntil;	/* password expiration time, if any */
+	/* Deprecated: password authority moved to pg_auth_password.  These
+	 * fields are kept in sync with the CURRENT (passposition=0) entry in
+	 * pg_auth_password as write-through aliases for backward compatibility
+	 * with third-party tools that read pg_authid directly.  They will be
+	 * removed in a future major release. */
+	text		rolpassword;	/* password, if any (deprecated alias) */
+	timestamptz rolvaliduntil;	/* password expiration time (deprecated alias) */
 #endif
 } FormData_pg_authid;
 

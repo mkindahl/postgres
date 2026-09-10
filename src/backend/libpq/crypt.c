@@ -2,7 +2,7 @@
  *
  * crypt.c
  *	  Functions for dealing with encrypted passwords stored in
- *	  pg_authid.rolpassword.
+ *	  pg_auth_password (and pg_authid.rolpassword as a fallback).
  *
  * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -15,6 +15,11 @@
 
 #include <unistd.h>
 
+#include "access/genam.h"
+#include "access/htup_details.h"
+#include "access/table.h"
+#include "utils/rel.h"
+#include "catalog/pg_auth_password.h"
 #include "catalog/pg_authid.h"
 #include "common/md5.h"
 #include "common/scram-common.h"
@@ -22,6 +27,7 @@
 #include "libpq/scram.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
@@ -29,79 +35,187 @@
 /* Threshold for password expiration warnings. */
 int			password_expiration_warning_threshold = 604800;
 
+/* Maximum allowed rotation window duration in minutes (0 = no limit). */
+int			password_rotation_max_duration = 1440;
+
 /* Enables deprecation warnings for MD5 passwords. */
 bool		md5_password_warnings = true;
 
 /*
- * Fetch stored password for a user, for authentication.
- *
- * On error, returns NULL, and stores a palloc'd string describing the reason,
- * for the postmaster log, in *logdetail.  The error reason should *not* be
- * sent to the client, to avoid giving away user information!
+ * qsort comparator: sort RolePasswordEntry by position descending so that
+ * PREVIOUS 1 (passposition = -1, most recently retired) appears first.
  */
-char *
+static int
+compare_password_position(const void *a, const void *b)
+{
+	const RolePasswordEntry *ea = (const RolePasswordEntry *) a;
+	const RolePasswordEntry *eb = (const RolePasswordEntry *) b;
+
+	if (ea->position > eb->position)
+		return -1;
+	if (ea->position < eb->position)
+		return 1;
+	return 0;
+}
+
+/*
+ * Fetch stored passwords for a user, for authentication.
+ *
+ * Returns a RolePasswordInfo with the CURRENT password and any active
+ * PREVIOUS passwords whose rotation window has not expired.  On error,
+ * returns NULL and stores a palloc'd explanation in *logdetail (for the
+ * server log only — never send to the client).
+ *
+ * Reads from pg_auth_password first; falls back to pg_authid.rolpassword
+ * so that roles created before this catalog existed still authenticate.
+ */
+RolePasswordInfo *
 get_role_password(const char *role, const char **logdetail)
 {
-	TimestampTz vuntil = 0;
 	HeapTuple	roleTup;
+	Oid			roleoid;
+	Relation	rel;
+	ScanKeyData skey;
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	RolePasswordInfo *info;
+	int			prev_alloc = 8;
+	int			nprev = 0;
+	TimestampTz now;
 	Datum		datum;
 	bool		isnull;
-	char	   *shadow_pass;
 
-	/* Get role info from pg_authid */
+	/* Verify the role exists and get its OID */
 	roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
 	if (!HeapTupleIsValid(roleTup))
 	{
-		*logdetail = psprintf(_("Role \"%s\" does not exist."),
-							  role);
-		return NULL;			/* no such user */
+		*logdetail = psprintf(_("Role \"%s\" does not exist."), role);
+		return NULL;
 	}
-
-	datum = SysCacheGetAttr(AUTHNAME, roleTup,
-							Anum_pg_authid_rolpassword, &isnull);
-	if (isnull)
-	{
-		ReleaseSysCache(roleTup);
-		*logdetail = psprintf(_("User \"%s\" has no password assigned."),
-							  role);
-		return NULL;			/* user has no password */
-	}
-	shadow_pass = TextDatumGetCString(datum);
-
-	datum = SysCacheGetAttr(AUTHNAME, roleTup,
-							Anum_pg_authid_rolvaliduntil, &isnull);
-	if (!isnull)
-		vuntil = DatumGetTimestampTz(datum);
-
+	roleoid = ((Form_pg_authid) GETSTRUCT(roleTup))->oid;
 	ReleaseSysCache(roleTup);
 
-	/*
-	 * Password OK, but check to be sure we are not past rolvaliduntil or
-	 * password_expiration_warning_threshold.
-	 */
-	if (!isnull)
-	{
-		TimestampTz now = GetCurrentTimestamp();
-		uint64		expire_time = TimestampDifferenceMicroseconds(now, vuntil);
+	now = GetCurrentTimestamp();
+	info = palloc0(sizeof(RolePasswordInfo));
+	info->previous = palloc(sizeof(RolePasswordEntry) * prev_alloc);
 
-		/*
-		 * If we're past rolvaliduntil, the connection attempt should fail, so
-		 * update logdetail and return NULL.
-		 */
-		if (vuntil < now)
+	/* Scan pg_auth_password for all entries belonging to this role */
+	rel = table_open(AuthPasswordRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey,
+				Anum_pg_auth_password_passroleid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(roleoid));
+
+	scan = systable_beginscan(rel, AuthPasswordRoleidPositionIndexId,
+							  true, NULL, 1, &skey);
+
+	while ((tuple = systable_getnext(scan)) != NULL)
+	{
+		Form_pg_auth_password pwform = (Form_pg_auth_password) GETSTRUCT(tuple);
+		RolePasswordEntry entry;
+
+		memset(&entry, 0, sizeof(entry));
+		entry.position = (int) pwform->passposition;
+
+		datum = heap_getattr(tuple, Anum_pg_auth_password_passtext,
+							 RelationGetDescr(rel), &isnull);
+		if (isnull)
+			continue;			/* shouldn't happen (BKI_FORCE_NOT_NULL) */
+		entry.passtext = TextDatumGetCString(datum);
+
+		datum = heap_getattr(tuple, Anum_pg_auth_password_passvaliduntil,
+							 RelationGetDescr(rel), &isnull);
+		entry.validuntil_isnull = isnull;
+		if (!isnull)
+			entry.validuntil = DatumGetTimestampTz(datum);
+
+		datum = heap_getattr(tuple, Anum_pg_auth_password_passchanged,
+							 RelationGetDescr(rel), &isnull);
+		entry.changed_isnull = isnull;
+		if (!isnull)
+			entry.changed = DatumGetTimestampTz(datum);
+
+		if (entry.position == 0)
 		{
-			*logdetail = psprintf(_("User \"%s\" has an expired password."),
-								  role);
+			info->current = entry;
+		}
+		else if (entry.position < 0 &&
+				 (entry.validuntil_isnull || entry.validuntil >= now))
+		{
+			/* Include only previous passwords still within their rotation window */
+			if (nprev >= prev_alloc)
+			{
+				prev_alloc *= 2;
+				info->previous = repalloc(info->previous,
+										  sizeof(RolePasswordEntry) * prev_alloc);
+			}
+			info->previous[nprev++] = entry;
+		}
+	}
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	info->nprevious = nprev;
+
+	/*
+	 * If there is no CURRENT entry in pg_auth_password (e.g. the role
+	 * predates this catalog), fall back to pg_authid.rolpassword.
+	 */
+	if (info->current.passtext == NULL)
+	{
+		roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(role));
+		Assert(HeapTupleIsValid(roleTup));
+
+		datum = SysCacheGetAttr(AUTHNAME, roleTup,
+								Anum_pg_authid_rolpassword, &isnull);
+		if (!isnull)
+		{
+			info->current.position = 0;
+			info->current.passtext = TextDatumGetCString(datum);
+
+			datum = SysCacheGetAttr(AUTHNAME, roleTup,
+									Anum_pg_authid_rolvaliduntil, &isnull);
+			info->current.validuntil_isnull = isnull;
+			if (!isnull)
+				info->current.validuntil = DatumGetTimestampTz(datum);
+		}
+		ReleaseSysCache(roleTup);
+	}
+
+	if (info->current.passtext == NULL)
+	{
+		*logdetail = psprintf(_("User \"%s\" has no password assigned."), role);
+		pfree(info->previous);
+		pfree(info);
+		return NULL;
+	}
+
+	/* Sort previous entries most-recently-retired first */
+	if (nprev > 1)
+		qsort(info->previous, nprev, sizeof(RolePasswordEntry),
+			  compare_password_position);
+
+	/*
+	 * Check whether the current password has expired.  Previous passwords
+	 * have their own validuntil (rotation-window end), already filtered above.
+	 */
+	if (!info->current.validuntil_isnull)
+	{
+		uint64		expire_time;
+
+		if (info->current.validuntil < now)
+		{
+			*logdetail = psprintf(_("User \"%s\" has an expired password."), role);
+			pfree(info->previous);
+			pfree(info);
 			return NULL;
 		}
 
-		/*
-		 * If we're past the warning threshold, the connection attempt should
-		 * succeed, but we still want to emit a warning.  To do so, we queue
-		 * the warning message using StoreConnectionWarning() so that it will
-		 * be emitted at the end of InitPostgres(), and we return normally.
-		 */
-		if (expire_time / USECS_PER_SEC < password_expiration_warning_threshold)
+		expire_time = TimestampDifferenceMicroseconds(now, info->current.validuntil);
+
+		if (expire_time / USECS_PER_SEC < (uint64) password_expiration_warning_threshold)
 		{
 			MemoryContext oldcontext;
 			int			days;
@@ -143,7 +257,7 @@ get_role_password(const char *role, const char **logdetail)
 		}
 	}
 
-	return shadow_pass;
+	return info;
 }
 
 /*
@@ -382,5 +496,35 @@ plain_crypt_verify(const char *role, const char *shadow_pass,
 	 */
 	*logdetail = psprintf(_("Password of user \"%s\" is in unrecognized format."),
 						  role);
+	return STATUS_ERROR;
+}
+
+/*
+ * Check given password against all active entries in a RolePasswordInfo,
+ * trying CURRENT first, then PREVIOUS entries in rotation-window order.
+ *
+ * Returns STATUS_OK if any entry matches, STATUS_ERROR otherwise.
+ */
+int
+plain_crypt_verify_with_rotation(const char *role, RolePasswordInfo *info,
+								 const char *client_pass,
+								 const char **logdetail)
+{
+	int			i;
+
+	/* Try the current password first */
+	if (plain_crypt_verify(role, info->current.passtext,
+						   client_pass, logdetail) == STATUS_OK)
+		return STATUS_OK;
+
+	/* Try each previous password (rotation window) in recency order */
+	for (i = 0; i < info->nprevious; i++)
+	{
+		if (plain_crypt_verify(role, info->previous[i].passtext,
+							   client_pass, logdetail) == STATUS_OK)
+			return STATUS_OK;
+	}
+
+	*logdetail = psprintf(_("Password does not match for user \"%s\"."), role);
 	return STATUS_ERROR;
 }
