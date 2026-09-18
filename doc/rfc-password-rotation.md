@@ -2,7 +2,7 @@
 
 **Status:** Draft  
 **Author:** Mats Kindahl <mats.kindahl@supabase.io>  
-**Date:** 2026-09-10  
+**Date:** 2026-09-18  
 **Related work:** Gurjeet Singh's `multiple_passwords_v4` branch, CF 44/4432  
 
 ---
@@ -56,7 +56,7 @@ When `NEXT PASSWORD 'new'` is issued, if the current secret is SCRAM-SHA-256, th
 
 ### New GUC
 
-`password_rotation_max_duration` (integer, seconds, default `86400`) — operator-configurable upper bound on how long a rotation window may remain open.  Set to `0` for no limit.  Settable via `postgresql.conf` / `SIGHUP`.
+`password_rotation_max_duration` (integer, minutes, default `1440`) — operator-configurable upper bound on how long a rotation window may remain open.  Set to `0` for no limit.  Settable via `postgresql.conf` / `SIGHUP`.
 
 ---
 
@@ -213,7 +213,7 @@ The `PREVIOUS PASSWORD = CURRENT` rollback clause parses correctly but raises `E
 
 - New catalog `pg_auth_password`, OID 4551 (rowtype OID 4552).
 - `pg_authid.rolpassword` and `pg_authid.rolvaliduntil` are now deprecated write-through aliases; their values continue to reflect CURRENT.
-- Catalog version bumped to `202607171`.
+- Catalog version bumped to `202609103`.
 
 ---
 
@@ -225,14 +225,15 @@ The `PREVIOUS PASSWORD = CURRENT` rollback clause parses correctly but raises `E
 | `crypt.c` — `get_role_password()` returns `RolePasswordInfo *` | Done |
 | `user.c` — rotation helpers + `AlterRole` dispatch | Done |
 | `gram.y` — new syntax tokens and productions | Done |
-| `guc_parameters.dat` — `password_rotation_max_duration` | Done |
+| `guc_parameters.dat` — `password_rotation_max_duration` (minutes) | Done |
 | `auth-scram.c` — multi-secret SCRAM + `pg_be_scram_build_secret_with_salt` | Done |
 | `auth-sasl.c` / `auth.c` — secrets array plumbing | Done |
+| Regression tests (DDL + catalog) | Done |
+| TAP authentication tests | Done |
 | `PREVIOUS PASSWORD = CURRENT` rollback | **Not implemented** |
-| `pg_dumpall` support | Deferred |
-| `pg_shadow` / system view updates | Deferred |
-| Regression tests | Not started |
-| Documentation | Not started |
+| `pg_dumpall` support | **Not implemented** |
+| `pg_shadow` / `pg_roles` / `\du` updates | **Not implemented** |
+| sgml documentation | **Not implemented** |
 
 ---
 
